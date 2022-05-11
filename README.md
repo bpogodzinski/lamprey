@@ -8,7 +8,6 @@
 
 - [Goals](#goals)
 - [Backlog](#backlog)
-- [To read](#to-read)
 
 ## Goals
 
@@ -27,8 +26,3 @@ v0.0.1
 
 - [ ] Prepare wiki/pages as a documentation about `Lamprey` and BitTorrent technology
 - [ ] Prepare milestones, issues and divide the tasks
-
-## To read
-
-- https://github.com/eliasson/pieces
-- https://markuseliasson.se/article/bittorrent-in-python/
