@@ -6,8 +6,17 @@
 
 # Table of Contents <!-- omit in toc -->
 
+- [Installing and running](#installing-and-running)
 - [Goals](#goals)
 - [Backlog](#backlog)
+
+## Installing and running
+
+```text
+git clone ssh://git@github.com/Lamprey-BitTorrent/lamprey-cli.git
+cd lamprey-cli
+python3 -m lamprey-cli -v archlinux-2022.05.01-x86_64.iso.torrent
+```
 
 ## Goals
 
