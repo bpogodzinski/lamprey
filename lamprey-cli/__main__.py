@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser(
 
 # positional arguments
 parser.add_argument(
-    "torrent-file",
+    "input_file",
     type=argparse.FileType('rb'),
     help=".torrent file to download"
 )
@@ -40,3 +40,13 @@ logging.basicConfig(
 )
 
 logging.info("lamprey-cli PID=%d", os.getpid())
+
+file = None
+with args.input_file as file_reader:
+    file = file_reader.read()
+
+# Parse file 
+
+# Extract info required to connect to the tracker
+
+# Return data from tracker
