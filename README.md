@@ -34,4 +34,3 @@ v1.0
 ## Backlog
 
 - [ ] Prepare wiki/pages as a documentation about `Lamprey` and BitTorrent technology
-- [ ] Prepare milestones, issues and divide the tasks
