@@ -11,16 +11,16 @@
 
 ## Goals
 
-v0.0.1
+v1.0
 
-- [ ] Możliwość parsowania magnetlinków
-- [ ] Możliwość łączenia się poszczególnych trackerów
-- [ ] Wymyślenie algorytmu do pobierania poszczególnych części pliku
-  - [ ] Możliwość ściągania sekwencyjnie
+- [ ] Parse magnetlinks
+- [ ] Connect to trackers
+- [ ] Figure out sequence of download
+  - [ ] Download sequentially
 - [ ] Progress bar
-- [ ] Wznowienie pobierania po przerwaniu
+- [ ] Renew progress after interruption or cancel
 - [ ] Proxy
-- [ ] Upload pliku do osiągnięcia pewnego ratio download/upload
+- [ ] Figure out upload
 
 ## Backlog
 
