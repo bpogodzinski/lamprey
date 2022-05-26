@@ -1,6 +1,11 @@
 import argparse
 import logging
 import os
+from datetime import datetime
+
+import bencoder
+
+from lamprey.common import format_bytes
 
 parser = argparse.ArgumentParser(
     prog="lamprey-cli", description="Lamprey BitTorrent client"
@@ -22,6 +27,11 @@ parser.add_argument(
     default=0,
     help="increase verbosity (default: print warnings, errors)"
 )
+parser.add_argument(
+    "--dry-run",
+    help="don't download anything",
+    action="store_true",
+)
 
 args = parser.parse_args()
 
@@ -39,13 +49,29 @@ logging.basicConfig(
     level=log_level
 )
 
-logging.info("lamprey-cli PID=%d", os.getpid())
+logging.info(f"lamprey-cli PID={os.getpid()}")
 
 file = None
 with args.input_file as file_reader:
     file = file_reader.read()
 
-# Parse file 
+# Parse file
+torrent = bencoder.decode(file)
+size = format_bytes(torrent[b'info'][b'length'])
+created_at = datetime.fromtimestamp(torrent[b'creation date'])
+torrent_information = f"""
+
+    name: {torrent[b'info'][b'name'].decode()}
+    comment: {torrent[b'comment'].decode()}
+    created: {created_at}
+    size: {"{:.2f} {}".format(size[0], size[1])}
+    """
+
+logging.info(torrent_information)
+
+if args.dry_run:
+    logging.warning("dry run, won't download")
+    exit(0)
 
 # Extract info required to connect to the tracker
 
