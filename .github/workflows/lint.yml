@@ -18,4 +18,4 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint --disable missing-module-docstring \
-               --fail-under 8.5 $(git ls-files '*.py')
+               --fail-under 9 $(git ls-files '*.py')
