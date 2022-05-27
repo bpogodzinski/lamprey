@@ -4,6 +4,7 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
+    "python.testing.pytestPath": "venv/bin/pytest",
     "python.formatting.provider": "autopep8",
     "editor.formatOnSave": true,
     "python.formatting.autopep8Path": "venv/bin/autopep8",

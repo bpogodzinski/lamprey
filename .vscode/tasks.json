@@ -2,27 +2,20 @@
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "2.0.0",
-    "command": "bash",
-    "type": "shell",
+    "command": "/bin/bash",
     "args": [
         "-c"
     ],
     "tasks": [
         {
-            "label": "Run",
-            "detail": "Build target debug with `FROM scratch AS breakpoint`",
-            "options":{
-                "env": {
-                    "DOCKER_BUILDKIT":"1"
-                },
-            },
+            "label": "Run tests",
             "args": [
-                "eval `ssh-agent` && ssh-add && docker build --ssh default --tag vsc-debug-image --target debug -f ${file} ${fileDirname} ; killall -9 ssh-agent"
+                ". ${workspaceFolder}/venv/bin/activate && pytest ${workspaceFolder}/tests"
             ],
             "problemMatcher": [],
             "runOptions": {"instanceLimit": 1},
             "group": {
-                "kind": "build",
+                "kind": "test",
                 "isDefault": true,
             }
         }
