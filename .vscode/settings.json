@@ -9,5 +9,7 @@
     "python.formatting.autopep8Path": "venv/bin/autopep8",
     "python.linting.pylintEnabled": true,
     "python.linting.pylintPath": "venv/bin/pylint",
-    "python.linting.pylintArgs": ["--disable missing-module-docstring"]
+    "python.linting.pylintArgs": [
+        "--disable missing-module-docstring"
+    ]
 }
