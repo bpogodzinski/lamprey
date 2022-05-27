@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import sys
 from datetime import datetime
 
 import bencoder
@@ -49,29 +50,29 @@ logging.basicConfig(
     level=log_level
 )
 
-logging.info(f"lamprey-cli PID={os.getpid()}")
+logging.info("lamprey-cli PID=%d", os.getpid())
 
-file = None
+FILE = None
 with args.input_file as file_reader:
-    file = file_reader.read()
+    FILE = file_reader.read()
 
 # Parse file
-torrent = bencoder.decode(file)
-size = format_bytes(torrent[b'info'][b'length'])
+torrent = bencoder.decode(FILE)
+size, postfix = format_bytes(torrent[b'info'][b'length'])
 created_at = datetime.fromtimestamp(torrent[b'creation date'])
 torrent_information = f"""
 
     name: {torrent[b'info'][b'name'].decode()}
     comment: {torrent[b'comment'].decode()}
     created: {created_at}
-    size: {"{:.2f} {}".format(size[0], size[1])}
+    size: {f'{size:.2f} {postfix}'}
     """
 
 logging.info(torrent_information)
 
 if args.dry_run:
     logging.warning("dry run, won't download")
-    exit(0)
+    sys.exit(0)
 
 # Extract info required to connect to the tracker
 
