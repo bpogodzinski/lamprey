@@ -15,6 +15,8 @@
 ```text
 git clone ssh://git@github.com/Lamprey-BitTorrent/lamprey-cli.git
 cd lamprey-cli
+python3 -m venv venv && . venv/bin/activate
+pip install -r requirements.txt
 python3 -m lamprey-cli -v archlinux-2022.05.01-x86_64.iso.torrent
 ```
 
