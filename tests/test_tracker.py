@@ -14,7 +14,7 @@ def torrent_file():
 @patch('lamprey.tracker.randint', autospec=True, return_value=7)
 def test_generate_peer_id(mock_randint):
     tracker = Tracker(torrent_file)
-    expected = f"{tracker.client_identifier}{''.join(['7' for _ in range(12)])}"
+    expected = "-LR2137-777777777777"
     actual = tracker._generate_peer_id()
     assert len(actual) == 20
     assert expected == actual
