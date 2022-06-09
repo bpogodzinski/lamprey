@@ -53,7 +53,7 @@ class Tracker:
         Args:
             first (bool, optional): Is it the first time connect to tracker?. Defaults to False.
             uploaded (int, optional): Bytes already uploaded to peers. Defaults to 0.
-            downloaded (int, optional): _description_. Defaults to 0.
+            downloaded (int, optional): Bytes already downloaded to peers. Defaults to 0.
 
         Raises:
             ConnectionError: raised if 400 or 500
