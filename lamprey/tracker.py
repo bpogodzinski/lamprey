@@ -14,10 +14,10 @@ class Tracker:
 
 
     def __init__(self, torrent) -> None:
+        self.torrent = torrent
         # default port for BitTorrent connections
         self.port = 6889
         self.peer_id = self._generate_peer_id()
-        self.info_dict = None
         if not Tracker.info_hash:
             Tracker.info_hash = self._generate_info_hash(self.info_dict)
 
@@ -26,12 +26,12 @@ class Tracker:
         raise NotImplementedError
     
     def _generate_peer_id(self) -> str:
-        """Generate peer_id once at first creation
+        """Generate peer_id
         peer_id follow convention:
         <client_identifier><12 random digits>"""
         raise NotImplementedError
 
-    def connect(self, first: bool, uploaded: int = 0,
+    def connect(self, first: bool = False, uploaded: int = 0,
                 downloaded: int = 0) -> requests.Response:
         """Connect to the tracker and return
         response"""
@@ -39,6 +39,6 @@ class Tracker:
 
     def _create_announce_url(self) -> str:
         """Create encoded url to get peer information"""
-        return str
+        raise NotImplementedError
 
     
