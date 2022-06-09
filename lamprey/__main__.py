@@ -74,6 +74,8 @@ if args.dry_run:
     logging.warning("dry run, won't download")
     sys.exit(0)
 
+# Check if user have enough space on the drive
+
 # Extract info required to connect to the tracker
 
 # Return data from tracker

@@ -4,16 +4,6 @@ import bencoder
 
 from lamprey.tracker import Tracker
 
-def bin_to_str(dictionary):
-    str_dict = {}
-    for k, v in dictionary.items():
-        key = k.decode('latin-1')
-        try:
-            str_dict[key] = v.decode('latin-1')
-        except AttributeError:
-            str_dict[key] = v
-    return str_dict
-
 @pytest.fixture(scope='module')
 def torrent_file():
     torrent_dict = {}
@@ -24,7 +14,7 @@ def torrent_file():
 @patch('lamprey.tracker.randint', autospec=True, return_value=7)
 def test_generate_peer_id(mock_randint):
     tracker = Tracker(torrent_file)
-    expected = f"{Tracker.client_identifier}{''.join(['7' for _ in range(12)])}"
+    expected = f"{tracker.client_identifier}{''.join(['7' for _ in range(12)])}"
     actual = tracker._generate_peer_id()
     assert len(actual) == 20
     assert expected == actual

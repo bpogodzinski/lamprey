@@ -1,5 +1,5 @@
-import hashlib
 import requests
+from hashlib import sha1
 from random import randint
 
 class Tracker:
@@ -22,23 +22,59 @@ class Tracker:
             Tracker.info_hash = self._generate_info_hash(self.info_dict)
 
     def _generate_info_hash(self, info_dict: dict) -> str:
-        """Generate sha1 hash of *info* torrent dict value"""
+        """Generate sha1 hash of *info* torrent dict value
+
+        Args:
+            info_dict (dict): Metafile 'info' key value
+
+        Raises:
+            NotImplementedError: WIP
+
+        Returns:
+            str: Hash of info key
+        """
         raise NotImplementedError
     
     def _generate_peer_id(self) -> str:
         """Generate peer_id
-        peer_id follow convention:
-        <client_identifier><12 random digits>"""
+
+        Raises:
+            NotImplementedError: WIP
+
+        Returns:
+            str: ID that follows convention <client_identifier><12 random digits>
+        """
         raise NotImplementedError
 
     def connect(self, first: bool = False, uploaded: int = 0,
                 downloaded: int = 0) -> requests.Response:
-        """Connect to the tracker and return
-        response"""
+        """Connect to the tracker and return response
+
+        Args:
+            first (bool, optional): Is it the first time connect to tracker?. Defaults to False.
+            uploaded (int, optional): Bytes already uploaded to peers. Defaults to 0.
+            downloaded (int, optional): _description_. Defaults to 0.
+
+        Raises:
+            ConnectionError: raised if 400 or 500
+            NotImplementedError: WIP
+
+        Returns:
+            requests.Response: response from tracker server
+        """
+        response = requests.get('http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-PC0001-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1&event=started')
         raise NotImplementedError
 
     def _create_announce_url(self) -> str:
-        """Create encoded url to get peer information"""
+        """Create encoded url to get peer information
+
+        Raises:
+            NotImplementedError: WIP
+
+        Returns:
+            str: URL to connect to. Ex: 
+            http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-LR2137-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1
+        """
         raise NotImplementedError
 
     
