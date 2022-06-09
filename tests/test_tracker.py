@@ -25,13 +25,13 @@ def torrent_file():
 def test_generate_peer_id(mock_randint):
     tracker = Tracker(torrent_file)
     expected = f"{Tracker.client_identifier}{''.join(['7' for _ in range(12)])}"
-    actual = tracker.generate_peer_id()
+    actual = tracker._generate_peer_id()
     assert len(actual) == 20
     assert expected == actual
 
 def test_generate_info_hash(torrent_file):
     tracker = Tracker(torrent_file)
     info_dict = torrent_file[b'info']
-    actual = tracker.generate_info_hash(info_dict)
+    actual = tracker._generate_info_hash(info_dict)
     expected = '9B4C1489BFCCD8205D152345F7A8AAD52D9A1F57'
     assert expected == actual
