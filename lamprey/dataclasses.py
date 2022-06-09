@@ -1,10 +1,6 @@
-from pprint import pprint
-from datetime import datetime
-import bencoder
-
-
 class Torrent():
-    def __init__(self, comment, created_by, creation_date, url_list, info, name, length, piece_length):
+    def __init__(self, comment, created_by, creation_date,\
+                 url_list, info, name, length, piece_length):
         self.comment = comment
         self.created_by = created_by
         self.creation_date = creation_date
@@ -37,4 +33,3 @@ class Torrent():
 
     def get_piece_length(self):
         return self.piece_length
-
