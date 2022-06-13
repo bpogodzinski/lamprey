@@ -2,6 +2,7 @@ import requests
 from hashlib import sha1
 from random import randint
 import bencoding
+
 class Tracker:
     """
     Class representing a tracker for a given torrent
@@ -9,7 +10,6 @@ class Tracker:
     # static variables
     client_identifier = '-LR2137-'
     info_hash = None
-
 
     def __init__(self, torrent) -> None:
         self.torrent = torrent
@@ -56,7 +56,8 @@ class Tracker:
         Returns:
             requests.Response: response from tracker server
         """
-        response = requests.get('http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-PC0001-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1&event=started')
+        response = requests.get(
+            'http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-PC0001-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1&event=started')
         raise NotImplementedError
 
     def _create_announce_url(self) -> str:
