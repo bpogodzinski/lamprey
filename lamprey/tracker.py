@@ -25,14 +25,12 @@ class Tracker:
         Args:
             info_dict (dict): Metafile 'info' key value
 
-        Raises:
-            NotImplementedError: WIP
-
         Returns:
             str: Hash of info key
         """
         torrent = bencoding.bdecode(torrent_file)
-        return sha1(bencoding.bencode(torrent[b'info'])).hexdigest()
+        torrent_info = torrent[b'info']
+        return sha1(bencoding.bencode(torrent_info)).hexdigest()
 
     def _generate_peer_id(self) -> str:
         """Generate peer_id
