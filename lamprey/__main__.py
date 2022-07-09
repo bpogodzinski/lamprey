@@ -4,7 +4,7 @@ import os
 import sys
 from datetime import datetime
 import bencoder
-from dataclasses import Torrent
+from lamprey.dataclass import Torrent
 
 from lamprey.common import format_bytes
 parser = argparse.ArgumentParser(
@@ -69,20 +69,7 @@ torrent_information = f"""
 
 logging.info(torrent_information)
 
-
-f = open("/home/pbartosz/lamprey-cli/archlinux-2022.05.01-x86_64.iso.torrent", "rb")
-d = bencoder.decode(f.read())
-
-t1 = Torrent((d[b"comment"]), (d[b"created by"]), (datetime.fromtimestamp(d[b"creation date"])), (d[b"url-list"]), (d[b"info"]), (d[b'info'][b'name']), (d[b'info'][b'length']), (d[b'info'][b'piece length']))
-
-print(t1.get_comment())
-print(t1.get_created_by())
-print(t1.get_creation_date())
-print(t1.get_url_list())
-print(t1.get_info())
-print(t1.get_name())
-print(t1.get_length())
-print(t1.get_piece_length())
+torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])), (torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']))
 
 if args.dry_run:
     logging.warning("dry run, won't download")
