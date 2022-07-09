@@ -6,10 +6,8 @@ class Tracker:
     """
     Class representing a tracker for a given torrent
     """
-    # check if user have space!
     # static variables
     client_identifier = '-LR2137-'
-    # TODO: move to torrent class
     info_hash = None
 
 
@@ -34,7 +32,7 @@ class Tracker:
             str: Hash of info key
         """
         raise NotImplementedError
-    
+
     def _generate_peer_id(self) -> str:
         """Generate peer_id
 
@@ -69,7 +67,7 @@ class Tracker:
             NotImplementedError: WIP
 
         Returns:
-            str: URL to connect to. Ex: 
+            str: URL to connect to. Ex:
             http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-LR2137-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1
         """
         raise NotImplementedError
