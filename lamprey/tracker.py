@@ -1,7 +1,7 @@
 import requests
 from hashlib import sha1
 from random import randint
-
+import bencoding
 class Tracker:
     """
     Class representing a tracker for a given torrent
@@ -19,7 +19,7 @@ class Tracker:
         # if not Tracker.info_hash:
             # Tracker.info_hash = self._generate_info_hash(self.info_dict)
 
-    def _generate_info_hash(self, info_dict: dict) -> str:
+    def _generate_info_hash(self, torrent_file: dict) -> str:
         """Generate sha1 hash of *info* torrent dict value
 
         Args:
@@ -31,7 +31,8 @@ class Tracker:
         Returns:
             str: Hash of info key
         """
-        
+        torrent = bencoding.bdecode(torrent_file)
+        return sha1(bencoding.bencode(torrent[b'info'])).hexdigest()
 
     def _generate_peer_id(self) -> str:
         """Generate peer_id
