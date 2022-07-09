@@ -18,8 +18,8 @@ class Tracker:
         # default port for BitTorrent connections
         self.port = 6889
         self.peer_id = self._generate_peer_id()
-        if not Tracker.info_hash:
-            Tracker.info_hash = self._generate_info_hash(self.info_dict)
+        # if not Tracker.info_hash:
+            # Tracker.info_hash = self._generate_info_hash(self.info_dict)
 
     def _generate_info_hash(self, info_dict: dict) -> str:
         """Generate sha1 hash of *info* torrent dict value
@@ -38,13 +38,10 @@ class Tracker:
     def _generate_peer_id(self) -> str:
         """Generate peer_id
 
-        Raises:
-            NotImplementedError: WIP
-
         Returns:
             str: ID that follows convention <client_identifier><12 random digits>
         """
-        raise NotImplementedError
+        return f"{Tracker.client_identifier}{''.join([str(randint(0,9)) for _ in range(12)])}"
 
     def connect(self, first: bool = False, uploaded: int = 0,
                 downloaded: int = 0) -> requests.Response:
