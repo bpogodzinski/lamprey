@@ -3,11 +3,10 @@ import logging
 import os
 import sys
 from datetime import datetime
-
-import bencoder
+import bencoding
+from lamprey.dataclass import Torrent
 
 from lamprey.common import format_bytes
-
 parser = argparse.ArgumentParser(
     prog="lamprey-cli", description="Lamprey BitTorrent client"
 )
@@ -57,7 +56,7 @@ with args.input_file as file_reader:
     FILE = file_reader.read()
 
 # Parse file
-torrent = bencoder.decode(FILE)
+torrent = bencoding.bdecode(FILE)
 size, postfix = format_bytes(torrent[b'info'][b'length'])
 created_at = datetime.fromtimestamp(torrent[b'creation date'])
 torrent_information = f"""
@@ -69,6 +68,8 @@ torrent_information = f"""
     """
 
 logging.info(torrent_information)
+
+torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])), (torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']))
 
 if args.dry_run:
     logging.warning("dry run, won't download")

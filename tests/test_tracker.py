@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch
-import bencoder
+import bencoding
 
 from lamprey.tracker import Tracker
 
@@ -9,7 +9,7 @@ def torrent_file():
     torrent_dict = {}
     FILEPATH = 'archlinux-2022.05.01-x86_64.iso.torrent'
     with open(FILEPATH, 'rb') as fp:
-        return bencoder.decode(fp.read())
+        return fp.read()
 
 @patch('lamprey.tracker.randint', autospec=True, return_value=7)
 def test_generate_peer_id(mock_randint):
@@ -21,7 +21,6 @@ def test_generate_peer_id(mock_randint):
 
 def test_generate_info_hash(torrent_file):
     tracker = Tracker(torrent_file)
-    info_dict = torrent_file[b'info']
-    actual = tracker._generate_info_hash(info_dict)
-    expected = '9B4C1489BFCCD8205D152345F7A8AAD52D9A1F57'
+    actual = tracker._generate_info_hash(torrent_file)
+    expected = '9b4c1489bfccd8205d152345f7a8aad52d9a1f57'
     assert expected == actual

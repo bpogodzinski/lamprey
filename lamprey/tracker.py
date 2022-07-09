@@ -1,15 +1,13 @@
 import requests
 from hashlib import sha1
 from random import randint
-
+import bencoding
 class Tracker:
     """
     Class representing a tracker for a given torrent
     """
-    # check if user have space!
     # static variables
     client_identifier = '-LR2137-'
-    # TODO: move to torrent class
     info_hash = None
 
 
@@ -21,20 +19,19 @@ class Tracker:
         # if not Tracker.info_hash:
             # Tracker.info_hash = self._generate_info_hash(self.info_dict)
 
-    def _generate_info_hash(self, info_dict: dict) -> str:
+    def _generate_info_hash(self, torrent_file: dict) -> str:
         """Generate sha1 hash of *info* torrent dict value
 
         Args:
             info_dict (dict): Metafile 'info' key value
 
-        Raises:
-            NotImplementedError: WIP
-
         Returns:
             str: Hash of info key
         """
-        raise NotImplementedError
-    
+        torrent = bencoding.bdecode(torrent_file)
+        torrent_info = torrent[b'info']
+        return sha1(bencoding.bencode(torrent_info)).hexdigest()
+
     def _generate_peer_id(self) -> str:
         """Generate peer_id
 
@@ -69,9 +66,7 @@ class Tracker:
             NotImplementedError: WIP
 
         Returns:
-            str: URL to connect to. Ex: 
+            str: URL to connect to. Ex:
             http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-LR2137-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1
         """
         raise NotImplementedError
-
-    
