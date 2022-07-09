@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 from datetime import datetime
-import bencoder
+import bencoding
 from lamprey.dataclass import Torrent
 
 from lamprey.common import format_bytes
@@ -56,7 +56,7 @@ with args.input_file as file_reader:
     FILE = file_reader.read()
 
 # Parse file
-torrent = bencoder.decode(FILE)
+torrent = bencoding.bdecode(FILE)
 size, postfix = format_bytes(torrent[b'info'][b'length'])
 created_at = datetime.fromtimestamp(torrent[b'creation date'])
 torrent_information = f"""
