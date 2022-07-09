@@ -51,14 +51,13 @@ class Tracker:
 
         Raises:
             ConnectionError: raised if 400 or 500
-            NotImplementedError: WIP
 
         Returns:
             requests.Response: response from tracker server
         """
         response = requests.get(
             'http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-PC0001-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1&event=started')
-        raise NotImplementedError
+        return response.status_code
 
     def _create_announce_url(self) -> str:
         """Create encoded url to get peer information
