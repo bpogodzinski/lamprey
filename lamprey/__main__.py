@@ -5,6 +5,8 @@ import sys
 from datetime import datetime
 import bencoding
 from lamprey.dataclass import Torrent
+from lamprey.tracker import Tracker
+from lamprey.common import check_user_disk_space
 
 from lamprey.common import format_bytes
 parser = argparse.ArgumentParser(
@@ -70,12 +72,15 @@ torrent_information = f"""
 logging.info(torrent_information)
 
 torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])), (torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']))
-
+xd = Tracker(torrent_info)
+# xd._create_announce_url()
 if args.dry_run:
     logging.warning("dry run, won't download")
     sys.exit(0)
 
-# Check if user have enough space on the drive
+# Check if user have enough space on the drive, assume that you download the file in the current directory
+check_user_disk_space()
+
 
 # Extract info required to connect to the tracker
 

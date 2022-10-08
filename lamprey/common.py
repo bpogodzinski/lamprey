@@ -8,3 +8,7 @@ def format_bytes(size):
         size /= power
         postfix_counter += 1
     return size, power_labels[postfix_counter]
+
+def check_user_disk_space():
+    raise NotImplementedError
+
