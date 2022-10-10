@@ -1,7 +1,11 @@
+from lamprey.dataclass import Torrent
 import requests
 from hashlib import sha1
 from random import randint
 import bencoding
+import urllib.parse
+
+
 class Tracker:
     """
     Class representing a tracker for a given torrent
@@ -10,14 +14,13 @@ class Tracker:
     client_identifier = '-LR2137-'
     info_hash = None
 
-
-    def __init__(self, torrent) -> None:
+    def __init__(self, torrent):
         self.torrent = torrent
         # default port for BitTorrent connections
         self.port = 6889
         self.peer_id = self._generate_peer_id()
-        # if not Tracker.info_hash:
-            # Tracker.info_hash = self._generate_info_hash(self.info_dict)
+        if not Tracker.info_hash:
+            Tracker.info_hash = self._generate_info_hash
 
     def _generate_info_hash(self, torrent_file: dict) -> str:
         """Generate sha1 hash of *info* torrent dict value
@@ -56,7 +59,8 @@ class Tracker:
         Returns:
             requests.Response: response from tracker server
         """
-        response = requests.get('http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-PC0001-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1&event=started')
+        response = requests.get(
+            'http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-PC0001-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1&event=started')
         raise NotImplementedError
 
     def _create_announce_url(self) -> str:
@@ -69,4 +73,14 @@ class Tracker:
             str: URL to connect to. Ex:
             http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-LR2137-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1
         """
+        #  poczatek url z torrent info ktoregos trzeba wziac i to wszystko chyba wjebac w urllib zeby wyplulo link
+        return str({
+            'info_hash': Tracker._generate_info_hash,
+            'peer_id': Tracker._generate_peer_id,
+            'uploaded': 0,
+            'downloaded': 0,
+            'port': 6889,
+            'left': Torrent.get_length,
+            'compact': 1})
+
         raise NotImplementedError
