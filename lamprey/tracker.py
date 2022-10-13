@@ -4,6 +4,7 @@ from hashlib import sha1
 from random import randint
 import bencoding
 import urllib.parse
+import logging
 
 
 class Tracker:
@@ -14,7 +15,7 @@ class Tracker:
     client_identifier = '-LR2137-'
     info_hash = None
 
-    def __init__(self, torrent):
+    def __init__(self, torrent: Torrent):
         self.torrent = torrent
         # default port for BitTorrent connections
         self.port = 6889
@@ -22,7 +23,7 @@ class Tracker:
         if not Tracker.info_hash:
             Tracker.info_hash = self._generate_info_hash
 
-    def _generate_info_hash(self, torrent_file: dict) -> str:
+    def _generate_info_hash(self, torrent: Torrent) -> str:
         """Generate sha1 hash of *info* torrent dict value
 
         Args:
@@ -31,9 +32,7 @@ class Tracker:
         Returns:
             str: Hash of info key
         """
-        torrent = bencoding.bdecode(torrent_file)
-        torrent_info = torrent[b'info']
-        return sha1(bencoding.bencode(torrent_info)).hexdigest()
+        return sha1(bencoding.bencode(torrent.get_info())).digest()
 
     def _generate_peer_id(self) -> str:
         """Generate peer_id
@@ -59,9 +58,12 @@ class Tracker:
         Returns:
             requests.Response: response from tracker server
         """
-        response = requests.get(
-            'http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-PC0001-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1&event=started')
-        raise NotImplementedError
+
+        url = self._create_announce_url()
+        # FIXME: getting 404
+        # TODO: Learn http codes, difference between GET and POST
+        response = requests.get(url)
+        print(response)
 
     def _create_announce_url(self) -> str:
         """Create encoded url to get peer information
@@ -80,6 +82,11 @@ class Tracker:
             port=6889&
             compact=1
         """
-        # F STRINGI SRPAWDZIC  poczatek url z torrent info ktoregos trzeba wziac i to wszystko chyba wjebac w urllib zeby wyplulo link
-        return f"http://torrent.ubuntu.com:6969/announce?info_hash={self._generate_info_hash}&peer_id={self._generate_peer_id}&uploaded={0}&downloaded={0}&port={self.port}&left={Torrent.get_length}&compact={1}"
-        raise NotImplementedError
+        info_hash = self._generate_info_hash(self.torrent)
+        info_hash_encoded = urllib.parse.quote(info_hash)
+        for announce_url in self.torrent.get_url_list():
+            tracker_url = announce_url.decode()
+            url = f"{tracker_url}announce?info_hash={info_hash_encoded}&peer_id={self._generate_peer_id()}&uploaded={0}&downloaded={0}&port={self.port}&left={self.torrent.get_length()}&compact={1}"
+            response = requests.get(url)
+            if response.status_code == 200:
+                logging.info(tracker_url)
