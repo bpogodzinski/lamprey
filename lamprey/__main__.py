@@ -9,82 +9,91 @@ from lamprey.tracker import Tracker
 from lamprey.common import check_user_disk_space
 
 from lamprey.common import format_bytes
-parser = argparse.ArgumentParser(
-    prog="lamprey-cli", description="Lamprey BitTorrent client"
-)
+import urllib.parse
 
-# positional arguments
-parser.add_argument(
-    "input_file",
-    type=argparse.FileType('rb'),
-    help=".torrent file to download"
-)
+# parser = argparse.ArgumentParser(
+#     prog="lamprey-cli", description="Lamprey BitTorrent client"
+# )
 
-# optional arguments
-parser.add_argument(
-    "-v",
-    "--verbose",
-    action="count",
-    dest="verbosity",
-    default=0,
-    help="increase verbosity (default: print warnings, errors)"
-)
-parser.add_argument(
-    "--dry-run",
-    help="don't download anything",
-    action="store_true",
-)
+# # positional arguments
+# parser.add_argument(
+#     "input_file",
+#     type=argparse.FileType('rb'),
+#     help=".torrent file to download"
+# )
 
-args = parser.parse_args()
+# # optional arguments
+# parser.add_argument(
+#     "-v",
+#     "--verbose",
+#     action="count",
+#     dest="verbosity",
+#     default=0,
+#     help="increase verbosity (default: print warnings, errors)"
+# )
+# parser.add_argument(
+#     "--dry-run",
+#     help="don't download anything",
+#     action="store_true",
+# )
 
-# set up logging
-#
-# -v for INFO
-# -vv for DEBUG
-log_level = max(logging.WARNING - 10 * args.verbosity, logging.DEBUG)
-assert log_level <= logging.WARNING
-assert log_level >= logging.DEBUG
-logging.basicConfig(
-    style="{",
-    format="{asctime:} {name:30} {levelname:8} {message:}",
-    datefmt="%Y-%m-%dT%H:%M:%S",
-    level=log_level
-)
+# args = parser.parse_args()
 
-logging.info("lamprey-cli PID=%d", os.getpid())
+# # set up logging
+# #
+# # -v for INFO
+# # -vv for DEBUG
+# log_level = max(logging.WARNING - 10 * args.verbosity, logging.DEBUG)
+# assert log_level <= logging.WARNING
+# assert log_level >= logging.DEBUG
+# logging.basicConfig(
+#     style="{",
+#     format="{asctime:} {name:30} {levelname:8} {message:}",
+#     datefmt="%Y-%m-%dT%H:%M:%S",
+#     level=log_level
+# )
 
-FILE = None
-with args.input_file as file_reader:
-    FILE = file_reader.read()
+# logging.info("lamprey-cli PID=%d", os.getpid())
 
-# Parse file
-torrent = bencoding.bdecode(FILE)
-size, postfix = format_bytes(torrent[b'info'][b'length'])
-created_at = datetime.fromtimestamp(torrent[b'creation date'])
-torrent_information = f"""
+# FILE = None
+# with args.input_file as file_reader:
+#     FILE = file_reader.read()
 
-    name: {torrent[b'info'][b'name'].decode()}
-    comment: {torrent[b'comment'].decode()}
-    created: {created_at}
-    size: {f'{size:.2f} {postfix}'}
-    """
+# # Parse file
+# torrent = bencoding.bdecode(FILE)
+# size, postfix = format_bytes(torrent[b'info'][b'length'])
+# created_at = datetime.fromtimestamp(torrent[b'creation date'])
+# torrent_information = f"""
 
-logging.info(torrent_information)
+#     name: {torrent[b'info'][b'name'].decode()}
+#     comment: {torrent[b'comment'].decode()}
+#     created: {created_at}
+#     size: {f'{size:.2f} {postfix}'}
+#     """
 
-torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])), (
-    torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']))
-xd = Tracker(torrent_info)
+# logging.info(torrent_information)
 
-# xd._create_announce_url()
+# torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])), (
+#     torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']))
+# xd = Tracker(torrent_info)
 
-if args.dry_run:
-    logging.warning("dry run, won't download")
-    sys.exit(0)
+# # xd._create_announce_url()
 
-# Check if user have enough space on the drive, assume that you download the file in the current directory
-check_user_disk_space()
+# if args.dry_run:
+#     logging.warning("dry run, won't download")
+#     sys.exit(0)
+
+# # Check if user have enough space on the drive, assume that you download the file in the current directory
+# check_user_disk_space()
 
 
-# Extract info required to connect to the tracker
+# # Extract info required to connect to the tracker
 
-# Return data from tracker
+# # Return data from tracker
+
+torrent_file = open(
+    "/home/pbartosz/lamprey-cli/archlinux-2022.05.01-x86_64.iso.torrent", "rb")
+torrent = bencoding.bdecode(torrent_file)
+test = Torrent(torrent[b'info'][b'length'])
+
+print(test.get_length)

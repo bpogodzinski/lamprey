@@ -71,16 +71,15 @@ class Tracker:
 
         Returns:
             str: URL to connect to. Ex:
-            http://torrent.ubuntu.com:6969/announce?info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&peer_id=-LR2137-706887310628&uploaded=0&downloaded=0&left=699400192&port=6889&compact=1
+            http://torrent.ubuntu.com:6969/announce?
+            info_hash=%90%28%9F%D3M%FC%1C%F8%F3%16%A2h%AD%D85L%853DX&
+            peer_id=-LR2137-706887310628&
+            uploaded=0&
+            downloaded=0&
+            left=699400192&
+            port=6889&
+            compact=1
         """
-        #  poczatek url z torrent info ktoregos trzeba wziac i to wszystko chyba wjebac w urllib zeby wyplulo link
-        return str({
-            'info_hash': Tracker._generate_info_hash,
-            'peer_id': Tracker._generate_peer_id,
-            'uploaded': 0,
-            'downloaded': 0,
-            'port': 6889,
-            'left': Torrent.get_length,
-            'compact': 1})
-
+        # F STRINGI SRPAWDZIC  poczatek url z torrent info ktoregos trzeba wziac i to wszystko chyba wjebac w urllib zeby wyplulo link
+        return f"http://torrent.ubuntu.com:6969/announce?info_hash={self._generate_info_hash}&peer_id={self._generate_peer_id}&uploaded={0}&downloaded={0}&port={self.port}&left={Torrent.get_length}&compact={1}"
         raise NotImplementedError
