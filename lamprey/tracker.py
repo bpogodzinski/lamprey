@@ -82,6 +82,10 @@ class Tracker:
             port=6889&
             compact=1
         """
+
+        # TODO: sprawdź czy którykolwiek z url z listy trackerów jest w stanie zwrócić 200
+        # Jeśli tak to wszystko git
+        # Jeśli nie to my coś źle robimy
         info_hash = self._generate_info_hash(self.torrent)
         info_hash_encoded = urllib.parse.quote(info_hash)
         for announce_url in self.torrent.get_url_list():
