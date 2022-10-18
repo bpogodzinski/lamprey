@@ -82,15 +82,17 @@ class Tracker:
             port=6889&
             compact=1
         """
-
-        # TODO: sprawdź czy którykolwiek z url z listy trackerów jest w stanie zwrócić 200
-        # Jeśli tak to wszystko git
-        # Jeśli nie to my coś źle robimy
+        # Żaden z trackerów nie zwraca 200
         info_hash = self._generate_info_hash(self.torrent)
         info_hash_encoded = urllib.parse.quote(info_hash)
         for announce_url in self.torrent.get_url_list():
             tracker_url = announce_url.decode()
             url = f"{tracker_url}announce?info_hash={info_hash_encoded}&peer_id={self._generate_peer_id()}&uploaded={0}&downloaded={0}&port={self.port}&left={self.torrent.get_length()}&compact={1}"
-            response = requests.get(url)
-            if response.status_code == 200:
-                logging.info(tracker_url)
+            try:
+                response = requests.get(url, timeout=2)
+                if response.status_code == 200:
+                    logging.info(tracker_url)
+            except requests.ConnectionError:
+                continue
+            except requests.ReadTimeout:
+                continue
