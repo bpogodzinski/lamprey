@@ -82,17 +82,17 @@ class Tracker:
             port=6889&
             compact=1
         """
-        # Żaden z trackerów nie zwraca 200
         info_hash = self._generate_info_hash(self.torrent)
         info_hash_encoded = urllib.parse.quote(info_hash)
-        for announce_url in self.torrent.get_url_list():
-            tracker_url = announce_url.decode()
-            url = f"{tracker_url}announce?info_hash={info_hash_encoded}&peer_id={self._generate_peer_id()}&uploaded={0}&downloaded={0}&port={self.port}&left={self.torrent.get_length()}&compact={1}"
-            try:
-                response = requests.get(url, timeout=2)
-                if response.status_code == 200:
-                    logging.info(tracker_url)
-            except requests.ConnectionError:
-                continue
-            except requests.ReadTimeout:
-                continue
+        tracker_url = self.torrent.get_announce().decode()
+        url = f"{tracker_url}announce?info_hash={info_hash_encoded}&peer_id={self._generate_peer_id()}&uploaded={0}&downloaded={0}&port={self.port}&left={self.torrent.get_length()}&compact={1}"
+        try:
+            response = requests.get(url, timeout=2)
+            if response.status_code == 200:
+
+                from pprint import pprint as pp
+                pp(bencoding.bdecode(response.content))
+        except requests.ConnectionError:
+            pass
+        except requests.ReadTimeout:
+            pass

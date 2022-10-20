@@ -1,3 +1,4 @@
+from pprint import pprint as pp
 import argparse
 import logging
 import os
@@ -72,16 +73,13 @@ torrent_information = f"""
     """
 
 logging.info(torrent_information)
-
-torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])), (
-    torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']))
+pp(torrent[b'announce'])
+pp(torrent[b'announce-list'])
+torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])),  (
+    torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']), (torrent[b'announce']), (torrent[b'announce-list']))
 xd = Tracker(torrent_info)
 
 xd._create_announce_url()
-
-logging.info(f'Created URL: {created_url}')
-
-
 
 if args.dry_run:
     logging.warning("dry run, won't download")
