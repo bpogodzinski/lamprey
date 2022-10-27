@@ -91,8 +91,17 @@ class Tracker:
             if response.status_code == 200:
 
                 from pprint import pprint as pp
-                pp(bencoding.bdecode(response.content))
+                print(
+                    f"Zestaw bajtów które mają informacje o peerach: {bencoding.bdecode(response.content)[b'peers']}")
+
         except requests.ConnectionError:
             pass
         except requests.ReadTimeout:
             pass
+
+
+# offset = 6
+# >> > [peers[0+offset], peers[1+offset],  peers[2+offset],  peers[3+offset],  int.from_bytes(peers[4+offset:6+offset], 'big')]
+# [85, 221, 141, 92, 6889]
+# >> > [peers[1+offset], peers[2+offset],  peers[3+offset],  peers[4+offset],  int.from_bytes(peers[5+offset:6+offset], 'big')]
+# [221, 141, 92, 26, 233]
