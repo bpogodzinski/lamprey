@@ -1,6 +1,6 @@
 class Torrent():
-    def __init__(self, comment, created_by, creation_date,\
-                 url_list, info, name, length, piece_length):
+    def __init__(self, comment, created_by, creation_date,
+                 url_list, info, name, length, piece_length, announce, announce_list):
         self.comment = comment
         self.created_by = created_by
         self.creation_date = creation_date
@@ -9,6 +9,8 @@ class Torrent():
         self.name = name
         self.length = length
         self.piece_length = piece_length
+        self.announce = announce
+        self.announce_list = announce_list
 
     def get_comment(self):
         return self.comment
@@ -33,3 +35,9 @@ class Torrent():
 
     def get_piece_length(self):
         return self.piece_length
+
+    def get_announce(self):
+        return self.announce
+
+    def get_announce_list(self):
+        return self.announce_list

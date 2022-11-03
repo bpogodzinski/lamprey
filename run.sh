@@ -8,4 +8,4 @@ then
 fi
 
 source venv/bin/activate
-python -m lamprey -h tests -h torrent-file SXSW_2020_Showcasing_Artists_Part2.torrent
+python -m lamprey -vv archlinux-2022.05.01-x86_64.iso.torrent
