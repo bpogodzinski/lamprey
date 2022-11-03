@@ -8,4 +8,4 @@ then
 fi
 
 source venv/bin/activate
-python -m lamprey -vv archlinux-2022.05.01-x86_64.iso.torrent
+python -m lamprey -vv tests/torrent-files/archlinux-2022.10.01-x86_64.torrent 
