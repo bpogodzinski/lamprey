@@ -10,7 +10,7 @@
             "request": "launch",
             "module": "lamprey",
             "justMyCode": true,
-            "args": ["--dry-run", "-vv", "${workspaceFolder}/archlinux-2022.05.01-x86_64.iso.torrent"]
+            "args": ["--dry-run", "-vv", "${workspaceFolder}/tests/torrent-files/archlinux-2022.10.01-x86_64.torrent"]
         }
     ]
 }
