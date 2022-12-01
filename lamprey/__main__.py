@@ -73,13 +73,16 @@ torrent_information = f"""
     """
 
 logging.info(torrent_information)
-pp(torrent[b'announce'])
-pp(torrent[b'announce-list'])
+# pp(torrent[b'announce'])
+# pp(torrent[b'announce-list'])
 torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])),  (
     torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']), (torrent[b'announce']), (torrent[b'announce-list']))
-xd = Tracker(torrent_info)
+tracker = Tracker(torrent_info)
+tracker_response = tracker.connect()
 
-xd._create_announce_url()
+# 1. Zrób funkcje która przyjmuje content z odpowiedzi trackera i zwraca liste peerów
+
+# 2. Połącz się z każdym peerem i wyprintuj odpowiedź od niego
 
 if args.dry_run:
     logging.warning("dry run, won't download")

@@ -1,13 +1,9 @@
-from sre_constants import SUCCESS
-from sys import byteorder
 from lamprey.dataclass import Torrent
 import requests
 from hashlib import sha1
 from random import randint
 import bencoding
 import urllib.parse
-import logging
-import codecs
 
 
 class Tracker:
@@ -63,10 +59,7 @@ class Tracker:
         """
 
         url = self._create_announce_url()
-        # FIXME: getting 404
-        # TODO: Learn http codes, difference between GET and POST
-        response = requests.get(url)
-        print(response)
+        return requests.get(url)
 
     def _create_announce_url(self) -> str:
         """Create encoded url to get peer information
@@ -89,35 +82,4 @@ class Tracker:
         info_hash = self._generate_info_hash(self.torrent)
         info_hash_encoded = urllib.parse.quote(info_hash)
         tracker_url = self.torrent.get_announce().decode()
-        url = f"{tracker_url}announce?info_hash={info_hash_encoded}&peer_id={self._generate_peer_id()}&uploaded={0}&downloaded={0}&port={self.port}&left={self.torrent.get_length()}&compact={1}"
-        offset = 6
-
-        try:
-            response = requests.get(url, timeout=2)
-            offset = 6
-            peers = bencoding.bdecode(response.content)[b'peers']
-
-            #  KOD PIECES,
-
-            # [peers[i:i + offset] for i in range(0, len(peers), 6)]
-
-            if response.status_code == 200:
-                # from pprint import pprint as pp
-                print(peers[0+offset], '.', peers[1+offset], '.', peers[2+offset], '.',
-                      peers[3+offset], '.', int.from_bytes((peers[4+offset:6+offset]), byteorder='big'))
-                # print(
-                #     f"Zestaw bajtów które mają informacje o peerach: {bencoding.bdecode(response.content)[b'peers']}")
-
-        except requests.ConnectionError:
-            pass
-        except requests.ReadTimeout:
-            pass
-
-#  ROZPISALEM TO CO BYKU OGARNAL TAK ZEBY WYPLULO ADRES IP, TERAZ WYSTARCZY UBRAC TO W LOOPA (NIBY LATWE A JEDNAK CHUJ WIE)
-#  NIE WIEM GDZIE ZACZAC TO PISAC ZEBY ZACZELO DZIALAC
-
-# offset = 6
-# >> > [peers[0+offset], peers[1+offset],  peers[2+offset],  peers[3+offset],  int.from_bytes(peers[4+offset:6+offset], 'big')]
-# [85, 221, 141, 92, 6889]
-# >> > [peers[1+offset], peers[2+offset],  peers[3+offset],  peers[4+offset],  int.from_bytes(peers[5+offset:6+offset], 'big')]
-# [221, 141, 92, 26, 233]
+        return f"{tracker_url}announce?info_hash={info_hash_encoded}&peer_id={self._generate_peer_id()}&uploaded={0}&downloaded={0}&port={self.port}&left={self.torrent.get_length()}&compact={1}"
