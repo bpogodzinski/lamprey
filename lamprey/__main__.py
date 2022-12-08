@@ -7,6 +7,7 @@ import sys
 from datetime import datetime
 import requests
 import bencoding
+import struct
 from lamprey.dataclass import Torrent
 from lamprey.tracker import Tracker
 from lamprey.common import check_user_disk_space
@@ -103,20 +104,30 @@ if tracker_response.status_code == 200:
 # info_hash: 20-byte SHA1 hash of the info key in the metainfo file. This is the same info_hash that is transmitted in tracker requests.
 # peer_id: 20-byte string used as a unique ID for the client. This is usually the same peer_id that is transmitted in tracker requests(but not always e.g. an anonymity option in Azureus).
 
-# 2.1 użyj struct do upakowania wiadomości do wysłania peerowi
+handshake_format = '!B19s8x20s20s'
+message = struct.pack(handshake_format, 19, 'BitTorrent protocol'.encode('utf-8'),
+                      tracker.info_hash, tracker.peer_id.encode('utf-8'))
+assert len(message) == 68, 'Invalid message length'
 
+# Handshake
 single_peer = peers_list[0].split(':')
-message = bytes(
-    f'19BitTorrent protocol00000000{tracker.info_hash}{tracker.peer_id}', 'utf-8')
 host = single_peer[0]
-port = single_peer[1]                   # The same port as used by the server
+port = int(single_peer[1])
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((host, port))
 s.sendall(message)
-data = s.recv(1024)
+data = s.recv(68)
 s.close()
-print('Received', repr(data))
+peer_response = struct.unpack(handshake_format, data)
+print('Received', peer_response)
+if peer_response[2] != tracker.info_hash:
+    logging.warning('Peer does not have the same infohash')
 
+# 2.1 odbierz wiadomość bitfield od peera
+
+# 2.2 wyślij do peera wiadomość interested
+
+# 2.3 odbierz od peera chocked/unchocked etc
 
 if args.dry_run:
     logging.warning("dry run, won't download")

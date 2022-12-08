@@ -20,7 +20,7 @@ class Tracker:
         self.port = 6889
         self.peer_id = self._generate_peer_id()
         if not Tracker.info_hash:
-            Tracker.info_hash = self._generate_info_hash
+            Tracker.info_hash = self._generate_info_hash(self.torrent)
 
     def _generate_info_hash(self, torrent: Torrent) -> str:
         """Generate sha1 hash of *info* torrent dict value
