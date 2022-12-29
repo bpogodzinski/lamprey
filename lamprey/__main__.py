@@ -90,7 +90,7 @@ if tracker_response.status_code == 200:
     number_of_peers = len(peers)//6
     for peer in range(0, number_of_peers):
         peers_list.append(
-            f"{peers[0+offset+peer]}.{peers[1+offset+peer]}.{peers[2+offset+peer]}.{peers[3+offset+peer]}:{int.from_bytes(peers[4+offset+peer:6+offset+peer], byteorder='big')}")
+            f"{peers[0+offset*peer]}.{peers[1+offset*peer]}.{peers[2+offset*peer]}.{peers[3+offset*peer]}:{int.from_bytes(peers[4+offset*peer:6+offset*peer], byteorder='big')}")
 # 2. Połącz się z każdym peerem i wyprintuj odpowiedź od niego
 
 # The handshake is a required message and must be the first message transmitted by the client. It is (49+len(pstr)) bytes long.
@@ -109,30 +109,58 @@ message = struct.pack(handshake_format, 19, 'BitTorrent protocol'.encode('utf-8'
                       tracker.info_hash, tracker.peer_id.encode('utf-8'))
 assert len(message) == 68, 'Invalid message length'
 
-# Handshake
-single_peer = peers_list[0].split(':')
-host = single_peer[0]
-port = int(single_peer[1])
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((host, port))
-s.sendall(message)
-data = s.recv(68)
-s.close()
-peer_response = struct.unpack(handshake_format, data)
-print('Received', peer_response)
-if peer_response[2] != tracker.info_hash:
-    logging.warning('Peer does not have the same infohash')
 
-# 2.1 odbierz wiadomość bitfield od peera
+def handshake(peer, message) -> dict:
+    peer_handshake = {
+        'message_send': tuple,
+        'success': bool,
+        'peer_response': tuple
+    }
+    peer_handshake['message_send'] = message
+    # co funkcja handshake ma zwracać
+    # -jak się połączy i dostanie odpowiedź to zwróć success true
+    # - w przypadku timeoutu, connection refuse albo ogólnie przypału z połączeniem to zwróć success false
+    single_peer = peer.split(':')
+    host = single_peer[0]
+    port = int(single_peer[1])
+    logging.debug(f'Connecting to {host}:{port}')
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(10)
+        s.connect((host, port))
+        s.settimeout(None)
+        s.sendall(message)
+        data = s.recv(68)
+        s.close()
+        peer_response = struct.unpack(handshake_format, data)
+        if peer_response[2] != tracker.info_hash:
+            logging.warning('Peer does not have the same infohash')
+        peer_handshake['peer_response'] = peer_response
+        logging.debug(
+            f'Handshake recevied from {host}:{port}\n{peer_response}')
+        peer_handshake['success'] = True
+    except (ConnectionError, TimeoutError) as e:
+        peer_handshake['success'] = False
+        peer_handshake['peer_response'] = None
+        logging.debug(f'Handshake request from {host}:{port}: {e}')
+
+    return peer_handshake
+
+
+peer_connection_attempts = [handshake(peer, message) for peer in peers_list]
+
+# 2.1 wyślij wiadomość bitfield od peera
 
 # 2.2 wyślij do peera wiadomość interested
 
 # 2.3 odbierz od peera chocked/unchocked etc
 
+
 if args.dry_run:
     logging.warning("dry run, won't download")
     sys.exit(0)
 
+# Optional: add info about online peers
 # Check if user have enough space on the drive, assume that you download the file in the current directory
 # check_user_disk_space()
 
