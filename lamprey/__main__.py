@@ -142,7 +142,7 @@ def handshake(peer, message) -> dict:
     except (ConnectionError, TimeoutError) as e:
         peer_handshake['success'] = False
         peer_handshake['peer_response'] = None
-        logging.debug(f'Handshake request from {host}:{port}: {e}')
+        logging.debug(f'Handshake request to {host}:{port}: {e}')
 
     return peer_handshake
 
