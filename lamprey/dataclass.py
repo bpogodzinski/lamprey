@@ -112,6 +112,33 @@ class KeepAlive(Message):
     pass
 
 
+class Choke(Message):
+    pass
+
+
+class Unchoke(Message):
+    pass
+
+
+class Intrested(Message):
+    pass
+
+
+class Have(Message):
+    pass
+
+
+class Bitfield(Message):
+    pass
+
+
+class Piece(Message):
+
+    class Unchoke(Message):
+    pass
+    pass
+
+
 class Request(Message):
 
     def __init__(self, index, begin, length):
