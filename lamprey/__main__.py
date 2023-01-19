@@ -149,7 +149,7 @@ def handshake(peer, message) -> dict:
 
 peer_connection_attempts = [handshake(peer, message) for peer in peers_list]
 
-# 2.1 wyślij wiadomość bitfield od peera
+# 2.1 Odbieraj wiadomości od peera nieustannie PeerStreamIterator
 
 # 2.2 wyślij do peera wiadomość interested
 

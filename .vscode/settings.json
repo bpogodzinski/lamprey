@@ -6,8 +6,8 @@
     "python.testing.pytestEnabled": true,
     "python.testing.pytestPath": "venv/bin/pytest",
     "python.formatting.provider": "autopep8",
-    "editor.formatOnSave": true,
-    "python.formatting.autopep8Path": "venv/bin/autopep8",
+    "editor.formatOnSave": false,
+    "python.formatting.autopep8Path": "",
     "python.linting.pylintEnabled": true,
     "python.linting.pylintPath": "venv/bin/pylint",
     "python.linting.pylintArgs": [

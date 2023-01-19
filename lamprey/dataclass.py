@@ -1,3 +1,4 @@
+import struct
 class Torrent():
     def __init__(self, comment, created_by, creation_date,
                  url_list, info, name, length, piece_length, announce, announce_list):
@@ -98,7 +99,6 @@ port: <len=0003><id=9><listen-port>
 
 '''
 
-
 class Message():
 
     def encode(self):
@@ -107,38 +107,73 @@ class Message():
     def decode(self):
         raise NotImplementedError
 
-
 class KeepAlive(Message):
-    pass
 
+    def __init__(self):
+        pass
+    def encode(self):
+        return struct.pack('!I', 0)
+    def decode(self):
+        return struct.unpack()
+        pass
 
 class Choke(Message):
-    pass
+    ID = 0
+    def encode(self):
+        return struct.pack('!Ib', 1, Choke.ID)
 
+    @classmethod
+    def decode(cls, data):
+        message_id = cls.ID
+        return struct.unpack('!Ib', 1, cls.ID)
+    
+    def __str__(self):
+        return 'Choke'
 
 class Unchoke(Message):
-    pass
+    ID = 1
+    def encode(self):
+        return struct.pack('!Ib', 1, Unchoke.ID)
 
+    @classmethod
+    def decode(cls, data):
+        message_id = cls.ID
+        return struct.unpack('!Ib', 1, cls.ID)
+    
+    def __str__(self):
+        return 'Unchoke'
 
-class Intrested(Message):
-    pass
+class Interested(Message):
+    ID = 2
+    def encode(self):
+        return struct.pack('!Ib', 1, Interested.ID)
 
+    @classmethod
+    def decode(cls, data):
+        message_id = cls.ID
+        return struct.unpack('!Ib', 1, cls.ID)
+    
+    def __str__(self):
+        return 'Interested'
 
 class Have(Message):
-    pass
+    def __init__ (self, piece_index):
+        self.piece_index = piece_index
+    
+    def encode(self):
+        pass
+    def decode(self):
+        pass
 
 
 class Bitfield(Message):
-    pass
+    def __init__ (self, bitfield):
+        self.bitfield = bitfield
 
-
-class Piece(Message):
-
-    class Unchoke(Message):
-    pass
-    pass
-
-
+    def encode(self):
+        pass
+    def decode(self):
+        pass
 class Request(Message):
 
     def __init__(self, index, begin, length):
@@ -153,6 +188,17 @@ class Request(Message):
         format_string = f'!B'
         # return struct.pack(format_string, self.length)
 
+    def decode(self):
+        pass
+
+class Piece(Message):
+    def __init__ (self, index, begin, block):
+        self.index = index
+        self.begin = begin
+        self.block = block
+
+    def encode(self):
+        pass
     def decode(self):
         pass
 
