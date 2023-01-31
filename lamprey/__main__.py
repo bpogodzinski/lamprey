@@ -8,7 +8,7 @@ from datetime import datetime
 import requests
 import bencoding
 import struct
-from lamprey.dataclass import Torrent
+from lamprey.dataclass import Torrent, Message, Interested
 from lamprey.tracker import Tracker
 from lamprey.common import check_user_disk_space
 
@@ -124,30 +124,50 @@ def handshake(peer, message) -> dict:
     host = single_peer[0]
     port = int(single_peer[1])
     logging.debug(f'Connecting to {host}:{port}')
+    from time import sleep
     try:
+        # Zapisuj stan połączenia
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(10)
         s.connect((host, port))
         s.settimeout(None)
         s.sendall(message)
-        data = s.recv(68)
-        s.close()
-        peer_response = struct.unpack(handshake_format, data)
+        handshake_data = s.recv(68)
+        peer_response = struct.unpack(handshake_format, handshake_data)
         if peer_response[2] != tracker.info_hash:
             logging.warning('Peer does not have the same infohash')
         peer_handshake['peer_response'] = peer_response
         logging.debug(
             f'Handshake recevied from {host}:{port}\n{peer_response}')
         peer_handshake['success'] = True
+        # Wyślij wiadomość o byciu zainteresowanym
+        msg = Interested()
+        s.sendall(msg.encode())
+        while True:
+            # Zdekoduj wiadomość bazując na id zawarte w 4 pierwszych bajtach
+            peer_response = s.recv(10*1024)
+            message_length = struct.unpack('>I', peer_response[0:4])[0]
+            logging.debug(f'Message length: {message_length}')
+            message_id = struct.unpack('>b', peer_response[4:5])[0]
+            logging.debug(f'Message id: {message_id}')
+            if message_id == Choke.ID:
+            if message_id == Unchoke.ID:
+            if message_id == Interested.ID:
+            else
+            # ...
     except (ConnectionError, TimeoutError) as e:
         peer_handshake['success'] = False
         peer_handshake['peer_response'] = None
         logging.debug(f'Handshake request to {host}:{port}: {e}')
+    except Exception as e:
+        print(e)
 
     return peer_handshake
 
 
 peer_connection_attempts = [handshake(peer, message) for peer in peers_list]
+
+
 
 # 2.1 Odbieraj wiadomości od peera nieustannie PeerStreamIterator
 

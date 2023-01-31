@@ -1,4 +1,6 @@
 import struct
+import logging
+
 class Torrent():
     def __init__(self, comment, created_by, creation_date,
                  url_list, info, name, length, piece_length, announce, announce_list):
@@ -100,7 +102,7 @@ port: <len=0003><id=9><listen-port>
 '''
 
 class Message():
-
+        
     def encode(self):
         raise NotImplementedError
 
@@ -115,7 +117,6 @@ class KeepAlive(Message):
         return struct.pack('!I', 0)
     def decode(self):
         return struct.unpack()
-        pass
 
 class Choke(Message):
     ID = 0
