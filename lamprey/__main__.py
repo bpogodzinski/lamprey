@@ -145,6 +145,8 @@ def handshake(peer, message) -> dict:
         s.sendall(msg.encode())
         while True:
             # Zdekoduj wiadomość bazując na id zawarte w 4 pierwszych bajtach
+            # Exception: unpack requires a buffer of 1 bytes
+            # sprawdź czy peer_response jest większy niż 4 bajty
             peer_response = s.recv(10*1024)
             message_length = struct.unpack('>I', peer_response[0:4])[0]
             logging.debug(f'Message length: {message_length}')
