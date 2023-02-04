@@ -102,7 +102,7 @@ port: <len=0003><id=9><listen-port>
 '''
 
 class Message():
-        
+
     def encode(self):
         raise NotImplementedError
 
@@ -125,7 +125,6 @@ class Choke(Message):
 
     @classmethod
     def decode(cls, data):
-        message_id = cls.ID
         return struct.unpack('!Ib', 1, cls.ID)
     
     def __str__(self):
@@ -138,7 +137,6 @@ class Unchoke(Message):
 
     @classmethod
     def decode(cls, data):
-        message_id = cls.ID
         return struct.unpack('!Ib', 1, cls.ID)
     
     def __str__(self):
@@ -151,13 +149,26 @@ class Interested(Message):
 
     @classmethod
     def decode(cls, data):
-        message_id = cls.ID
         return struct.unpack('!Ib', 1, cls.ID)
     
     def __str__(self):
         return 'Interested'
 
+class Not_Interested(Message):
+    ID = 3
+    def encode(self):
+        return struct.pack('!Ib', 1, Not_Interested.ID)
+
+    @classmethod
+    def decode(cls, data):
+        message_id = cls.ID
+        return struct.unpack('!Ib', 1, cls.ID)
+    
+    def __str__(self):
+        return 'Not Interested'
+
 class Have(Message):
+    ID = 4
     def __init__ (self, piece_index):
         self.piece_index = piece_index
     
@@ -168,6 +179,7 @@ class Have(Message):
 
 
 class Bitfield(Message):
+    ID = 5
     def __init__ (self, bitfield):
         self.bitfield = bitfield
 
@@ -176,23 +188,21 @@ class Bitfield(Message):
     def decode(self):
         pass
 class Request(Message):
-
+    ID = 6
     def __init__(self, index, begin, length):
         self.index = index
         self.begin = begin
         self.length = length
-
-    def funkcja_pomocnicza(self):
-        pass
 
     def encode(self):
         format_string = f'!B'
         # return struct.pack(format_string, self.length)
 
     def decode(self):
-        pass
+        raise NotImplementedError('Peer Request decode message not implemented')
 
 class Piece(Message):
+    ID = 7
     def __init__ (self, index, begin, block):
         self.index = index
         self.begin = begin
@@ -203,5 +213,41 @@ class Piece(Message):
     def decode(self):
         pass
 
+class Cancel(Message):
+    ID = 8
+    
+    def encode(self):
+        raise NotImplementedError('Peer Cancel encode message not implemented')
+    def decode(self):
+        raise NotImplementedError('Peer Cancel decode message not implemented')
 
-pass
+class Port(Message):
+    ID = 9
+    
+    def encode(self):
+        raise NotImplementedError('Peer Port encode message not implemented')
+    def decode(self):
+        raise NotImplementedError('Peer Port decode message not implemented')
+class Connection_Reset(Message):
+    ID = -1
+
+    def encode(self):
+        raise NotImplementedError('Peer Connection_Reset encode message not implemented')
+    def decode(self):
+        raise NotImplementedError('Peer Connection_Reset decode message not implemented')
+
+ID_to_msg_class = {
+
+                   None:KeepAlive,
+                     -1:Connection_Reset,
+                      0:Choke,
+                      1:Unchoke,
+                      2:Interested,
+                      3:Not_Interested,
+                      4:Have,
+                      5:Bitfield,
+                      6:Request,
+                      7:Piece,
+                      8:Cancel,
+                      9:Port
+                  }

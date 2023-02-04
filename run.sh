@@ -8,4 +8,4 @@ then
 fi
 
 source venv/bin/activate
-python -m lamprey -vv tests/torrent-files/archlinux-2022.10.01-x86_64.torrent 
+python -m lamprey -vv tests/torrent-files/debian-live-11.5.0-amd64-standard.iso.torrent

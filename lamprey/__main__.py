@@ -5,15 +5,44 @@ import logging
 import os
 import sys
 from datetime import datetime
-import requests
 import bencoding
 import struct
-from lamprey.dataclass import Torrent, Message, Interested
+from lamprey.dataclass import Torrent, Interested, ID_to_msg_class
 from lamprey.tracker import Tracker
 from lamprey.common import check_user_disk_space
 
 from lamprey.common import format_bytes
-import urllib.parse
+
+def handshake(peer) -> bool:
+    handshake_format = '!B19s8x20s20s'
+
+    logging.debug(f'Handshake attempt to {peer}:{port}')
+    message = struct.pack(handshake_format, 19, 'BitTorrent protocol'.encode('utf-8'),
+                          tracker.info_hash, tracker.peer_id.encode('utf-8'))
+    s.sendall(message)
+    handshake_data = s.recv(68)
+    peer_response = struct.unpack(handshake_format, handshake_data)
+    if peer_response[2] != tracker.info_hash:
+        logging.error('Peer does not have the same infohash')
+        exit(1) # Something wrong with tracker, not important right now and rarely happens
+    logging.debug(
+            f'Handshake recevied from {peer}:{port}\n{peer_response}')
+    return True
+
+# TODO: Zapisuj stan połączenia
+# >Each client starts in the state choked and not interested.
+# >That means that the client is not allowed to request pieces from the remote peer,
+# >nor do we have intent of being interested.
+
+# Choked A choked peer is not allowed to request any pieces from the other peer.
+# Unchoked A unchoked peer is allowed to request pieces from the other peer.
+# Interested Indicates that a peer is interested in requesting pieces.
+# Not interested Indicates that the peer is not interested in requesting pieces.
+
+# TODO: Sprawdź czy użytkownik ma odpowiednio dużo przestrzeni dyskowej na plik
+# Sprawdź pojemność dysku na który wskazuje path
+# Check if user have enough space on the drive, assume that you download the file in the current directory
+# check_user_disk_space()
 
 parser = argparse.ArgumentParser(
     prog="lamprey-cli", description="Lamprey BitTorrent client"
@@ -57,7 +86,7 @@ logging.basicConfig(
     level=log_level
 )
 
-logging.info("lamprey-cli PID=%d", os.getpid())
+logging.debug("lamprey-cli PID=%d", os.getpid())
 
 FILE = None
 with args.input_file as file_reader:
@@ -76,117 +105,61 @@ torrent_information = f"""
     """
 
 logging.info(torrent_information)
-# pp(torrent[b'announce'])
-# pp(torrent[b'announce-list'])
+
 torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])),  (
     torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']), (torrent[b'announce']), (torrent[b'announce-list']))
+
 tracker = Tracker(torrent_info)
 tracker_response = tracker.connect()
-# 1. Zrób funkcje która przyjmuje content z odpowiedzi trackera i zwraca liste peerów
 peers_list = []
 offset = 6
+
+if tracker_response.status_code != 200:
+    logging.error(f'Tracker returned non 200 code')
+    exit(1)
+
 peers = bencoding.bdecode(tracker_response.content)[b'peers']
-if tracker_response.status_code == 200:
-    number_of_peers = len(peers)//6
-    for peer in range(0, number_of_peers):
-        peers_list.append(
-            f"{peers[0+offset*peer]}.{peers[1+offset*peer]}.{peers[2+offset*peer]}.{peers[3+offset*peer]}:{int.from_bytes(peers[4+offset*peer:6+offset*peer], byteorder='big')}")
-# 2. Połącz się z każdym peerem i wyprintuj odpowiedź od niego
+number_of_peers = len(peers)//6
 
-# The handshake is a required message and must be the first message transmitted by the client. It is (49+len(pstr)) bytes long.
-# handshake: <pstrlen><pstr><reserved><info_hash><peer_id>
+for peer in range(0, number_of_peers):
+    peers_list.append(
+        f"{peers[0+offset*peer]}.{peers[1+offset*peer]}.{peers[2+offset*peer]}.{peers[3+offset*peer]}:{int.from_bytes(peers[4+offset*peer:6+offset*peer], byteorder='big')}")
 
-# Z = 19BitTorrent protocol00000000{tracker.info_hash}{tracker.peer_id}
+logging.info(f'Active peers ({len(peers_list)}): {peers_list}')
 
-# pstrlen: string length of < pstr >, as a single raw byte
-# pstr: string identifier of the protocol
-# reserved: eight(8) reserved bytes. All current implementations use all zeroes. Each bit in these bytes can be used to change the behavior of the protocol. An email from Bram suggests that trailing bits should be used first, so that leading bits may be used to change the meaning of trailing bits.
-# info_hash: 20-byte SHA1 hash of the info key in the metainfo file. This is the same info_hash that is transmitted in tracker requests.
-# peer_id: 20-byte string used as a unique ID for the client. This is usually the same peer_id that is transmitted in tracker requests(but not always e.g. an anonymity option in Azureus).
-
-handshake_format = '!B19s8x20s20s'
-message = struct.pack(handshake_format, 19, 'BitTorrent protocol'.encode('utf-8'),
-                      tracker.info_hash, tracker.peer_id.encode('utf-8'))
-assert len(message) == 68, 'Invalid message length'
-
-
-def handshake(peer, message) -> dict:
-    peer_handshake = {
-        'message_send': tuple,
-        'success': bool,
-        'peer_response': tuple
-    }
-    peer_handshake['message_send'] = message
-    # co funkcja handshake ma zwracać
-    # -jak się połączy i dostanie odpowiedź to zwróć success true
-    # - w przypadku timeoutu, connection refuse albo ogólnie przypału z połączeniem to zwróć success false
-    single_peer = peer.split(':')
-    host = single_peer[0]
-    port = int(single_peer[1])
-    logging.debug(f'Connecting to {host}:{port}')
-    from time import sleep
+for peer in peers_list:
     try:
-        # Zapisuj stan połączenia
+        list_peer = peer.split(':')
+        peer = list_peer[0]
+        port = int(list_peer[1])
+
+        # Setup connection
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(10)
-        s.connect((host, port))
+        s.connect((peer, port))
         s.settimeout(None)
-        s.sendall(message)
-        handshake_data = s.recv(68)
-        peer_response = struct.unpack(handshake_format, handshake_data)
-        if peer_response[2] != tracker.info_hash:
-            logging.warning('Peer does not have the same infohash')
-        peer_handshake['peer_response'] = peer_response
-        logging.debug(
-            f'Handshake recevied from {host}:{port}\n{peer_response}')
-        peer_handshake['success'] = True
-        # Wyślij wiadomość o byciu zainteresowanym
+
+        # Initiate connection with peer
+        handshake(peer)
+
+        # Inform peer that we are interested in downloading pieces
         msg = Interested()
         s.sendall(msg.encode())
+
+        # Get the peer responce and decode
+        # the lenght and the type of the message
+        # DEBUG: sprawdź jakie wiadomości lecą od peera
         while True:
-            # Zdekoduj wiadomość bazując na id zawarte w 4 pierwszych bajtach
-            # Exception: unpack requires a buffer of 1 bytes
-            # sprawdź czy peer_response jest większy niż 4 bajty
-            peer_response = s.recv(10*1024)
+            peer_response = s.recv(10*512)
             message_length = struct.unpack('>I', peer_response[0:4])[0]
-            logging.debug(f'Message length: {message_length}')
             message_id = struct.unpack('>b', peer_response[4:5])[0]
-            logging.debug(f'Message id: {message_id}')
-            if message_id == Choke.ID:
-            if message_id == Unchoke.ID:
-            if message_id == Interested.ID:
-            else
-            # ...
-    except (ConnectionError, TimeoutError) as e:
-        peer_handshake['success'] = False
-        peer_handshake['peer_response'] = None
-        logging.debug(f'Handshake request to {host}:{port}: {e}')
-    except Exception as e:
-        print(e)
-
-    return peer_handshake
-
-
-peer_connection_attempts = [handshake(peer, message) for peer in peers_list]
-
-
-
-# 2.1 Odbieraj wiadomości od peera nieustannie PeerStreamIterator
-
-# 2.2 wyślij do peera wiadomość interested
-
-# 2.3 odbierz od peera chocked/unchocked etc
-
-
-if args.dry_run:
-    logging.warning("dry run, won't download")
-    sys.exit(0)
-
-# Optional: add info about online peers
-# Check if user have enough space on the drive, assume that you download the file in the current directory
-# check_user_disk_space()
-
-
-# Extract info required to connect to the tracker
-
-# Return data from tracker
+            logging.debug(f'''
+                Message from: {peer}
+                Message length: {message_length}
+                Message ID: {message_id} {ID_to_msg_class[message_id]}
+                ''')
+        # TODO FIXME FUTURE: pamiętaj o zamknięciu socketa
+        # REMIND: wysyłaj not interested do peera jeśli nie chcesz pobierać kawałków
+    except (ConnectionResetError, TimeoutError) as e:
+        logging.debug(f'Connection to {peer}:{port} closed: {e}')
+        continue

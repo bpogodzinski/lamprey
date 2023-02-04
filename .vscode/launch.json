@@ -10,7 +10,7 @@
             "request": "launch",
             "module": "lamprey",
             "justMyCode": true,
-            "args": ["--dry-run", "-vv", "${workspaceFolder}/tests/torrent-files/archlinux-2022.10.01-x86_64.torrent"]
+            "args": ["--dry-run", "-vv", "${workspaceFolder}/tests/torrent-files/debian-live-11.5.0-amd64-standard.iso.torrent"]
         }
     ]
 }
