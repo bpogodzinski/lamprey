@@ -228,18 +228,10 @@ class Port(Message):
         raise NotImplementedError('Peer Port encode message not implemented')
     def decode(self):
         raise NotImplementedError('Peer Port decode message not implemented')
-class Connection_Reset(Message):
-    ID = -1
-
-    def encode(self):
-        raise NotImplementedError('Peer Connection_Reset encode message not implemented')
-    def decode(self):
-        raise NotImplementedError('Peer Connection_Reset decode message not implemented')
 
 ID_to_msg_class = {
-
                    None:KeepAlive,
-                     -1:Connection_Reset,
+                     -1:KeepAlive,
                       0:Choke,
                       1:Unchoke,
                       2:Interested,

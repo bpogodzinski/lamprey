@@ -21,6 +21,9 @@ def handshake(peer) -> bool:
                           tracker.info_hash, tracker.peer_id.encode('utf-8'))
     s.sendall(message)
     handshake_data = s.recv(68)
+    if len(handshake_data) < 68:
+        logging.debug(f'Handshake attempt to {peer}:{port} failed: Invalid handshake response')
+        return False
     peer_response = struct.unpack(handshake_format, handshake_data)
     if peer_response[2] != tracker.info_hash:
         logging.error('Peer does not have the same infohash')
@@ -117,7 +120,6 @@ offset = 6
 if tracker_response.status_code != 200:
     logging.error(f'Tracker returned non 200 code')
     exit(1)
-
 peers = bencoding.bdecode(tracker_response.content)[b'peers']
 number_of_peers = len(peers)//6
 
@@ -140,7 +142,16 @@ for peer in peers_list:
         s.settimeout(None)
 
         # Initiate connection with peer
-        handshake(peer)
+        
+        # TODO, dac 5 prob połączenia handshake 
+        for i in range(5):
+            logging.debug(f'Handshake attempt {i+1}: {success}')
+            success = handshake(peer)
+            if success:
+                break
+        if not success:
+            logging.debug(f'5 Handshake attempts were failed, skipping peer')
+            continue
 
         # Inform peer that we are interested in downloading pieces
         msg = Interested()
@@ -151,8 +162,10 @@ for peer in peers_list:
         # DEBUG: sprawdź jakie wiadomości lecą od peera
         while True:
             peer_response = s.recv(10*512)
+            if len(peer_response) < 4:
+                raise ConnectionResetError('Peer sent empty response')
             message_length = struct.unpack('>I', peer_response[0:4])[0]
-            message_id = struct.unpack('>b', peer_response[4:5])[0]
+            message_id = struct.unpack('>b', peer_response[4:5])[0] if message_length > 0 else None
             logging.debug(f'''
                 Message from: {peer}
                 Message length: {message_length}
@@ -160,6 +173,11 @@ for peer in peers_list:
                 ''')
         # TODO FIXME FUTURE: pamiętaj o zamknięciu socketa
         # REMIND: wysyłaj not interested do peera jeśli nie chcesz pobierać kawałków
-    except (ConnectionResetError, TimeoutError) as e:
+    except (ConnectionResetError, ConnectionRefusedError, TimeoutError) as e:
         logging.debug(f'Connection to {peer}:{port} closed: {e}')
+        s.close()
         continue
+    except Exception as e:
+        logging.error(f'Unknown exception caught: {e}')
+        s.close()
+        exit(1)
