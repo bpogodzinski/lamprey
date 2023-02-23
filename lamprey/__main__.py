@@ -3,13 +3,12 @@ from pprint import pprint as pp
 import argparse
 import logging
 import os
-import sys
 from datetime import datetime
 import bencoding
 import struct
+import bitstring
 from lamprey.dataclass import Torrent, Interested, ID_to_msg_class
 from lamprey.tracker import Tracker
-from lamprey.common import check_user_disk_space
 
 from lamprey.common import format_bytes
 
@@ -145,8 +144,8 @@ for peer in peers_list:
         
         # TODO, dac 5 prob połączenia handshake 
         for i in range(5):
-            logging.debug(f'Handshake attempt {i+1}: {success}')
             success = handshake(peer)
+            logging.debug(f'Handshake attempt {i+1}: {"Success" if success else "Failed"}')
             if success:
                 break
         if not success:
@@ -159,25 +158,44 @@ for peer in peers_list:
 
         # Get the peer responce and decode
         # the lenght and the type of the message
-        # DEBUG: sprawdź jakie wiadomości lecą od peera
-        while True:
-            peer_response = s.recv(10*512)
-            if len(peer_response) < 4:
-                raise ConnectionResetError('Peer sent empty response')
-            message_length = struct.unpack('>I', peer_response[0:4])[0]
-            message_id = struct.unpack('>b', peer_response[4:5])[0] if message_length > 0 else None
-            logging.debug(f'''
-                Message from: {peer}
-                Message length: {message_length}
-                Message ID: {message_id} {ID_to_msg_class[message_id]}
-                ''')
-        # TODO FIXME FUTURE: pamiętaj o zamknięciu socketa
-        # REMIND: wysyłaj not interested do peera jeśli nie chcesz pobierać kawałków
-    except (ConnectionResetError, ConnectionRefusedError, TimeoutError) as e:
+        peer_response = s.recv(10*1024)
+        if len(peer_response) < 4:
+            raise ConnectionResetError('Peer sent empty response')
+        message_length = struct.unpack('>I', peer_response[0:4])[0]
+        message_id = struct.unpack('>b', peer_response[4:5])[0] if message_length > 0 else None
+        message_payload = None
+        if message_id == 5:
+            import pdb
+            pdb.set_trace()
+            message_payload = bitstring.BitArray(peer_response[5:message_length]).bin
+        logging.debug(f'''
+            Message from: {peer}
+            Message length: {message_length}
+            Message ID: {message_id} {ID_to_msg_class[message_id]}
+            Message payload: {message_payload}
+            ''')
+
+    except OSError as e:
         logging.debug(f'Connection to {peer}:{port} closed: {e}')
         s.close()
         continue
-    except Exception as e:
-        logging.error(f'Unknown exception caught: {e}')
-        s.close()
-        exit(1)
+
+
+'''
+1. A torrents data is split into N number of pieces of equal size (except the last piece in a torrent, which might be of smaller size than the others)
+
+2. The piece length is specified in the .torrent file. Typically pieces are of sizes 512 kB or less, and should be a power of 2.
+
+N - ilość pieces == bitfield
+
+czyli N * piece length >= długość całego torrenta
+N >= długość torrenta / piece length
+
+https://stackoverflow.com/questions/44308457/confusion-around-bitfield-torrent - size of bitfield
+
+Yes, in the BitTorrent protocol, the bitfield message sent between peers is constant for a given torrent file. The length of the bitfield message is determined by the number of pieces in the torrent file, and this value is the same for all peers sharing the same torrent.
+
+Each bit in the bitfield corresponds to a piece in the torrent file, and the value of the bit indicates whether the peer has that piece or not. So, if two peers are sharing the same torrent file, they should have the same length bitfield and the same set of bits indicating which pieces they have.
+
+However, it's worth noting that not all peers will have the complete set of pieces for a given torrent file. Peers may join or leave the swarm at different times, and some may have slower download speeds or limited storage capacity, which can affect which pieces they have available. So, while the length of the bitfield message is constant, the specific set of pieces indicated by each peer may differ.
+'''

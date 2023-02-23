@@ -187,6 +187,7 @@ class Bitfield(Message):
         pass
     def decode(self):
         pass
+
 class Request(Message):
     ID = 6
     def __init__(self, index, begin, length):
