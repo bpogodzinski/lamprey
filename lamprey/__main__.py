@@ -152,9 +152,6 @@ for peer in peers_list:
             logging.debug(f'5 Handshake attempts were failed, skipping peer')
             continue
 
-        # Inform peer that we are interested in downloading pieces
-        msg = Interested()
-        s.sendall(msg.encode())
 
         # Get the peer responce and decode
         # the lenght and the type of the message
@@ -165,8 +162,6 @@ for peer in peers_list:
         message_id = struct.unpack('>b', peer_response[4:5])[0] if message_length > 0 else None
         message_payload = None
         if message_id == 5:
-            import pdb
-            pdb.set_trace()
             message_payload = bitstring.BitArray(peer_response[5:message_length]).bin
         logging.debug(f'''
             Message from: {peer}
@@ -174,6 +169,11 @@ for peer in peers_list:
             Message ID: {message_id} {ID_to_msg_class[message_id]}
             Message payload: {message_payload}
             ''')
+
+        # Inform peer that we are interested in downloading pieces
+        msg = Interested()
+        s.sendall(msg.encode())
+        logging.debug(f'Sending interested message to: {peer}')
 
     except OSError as e:
         logging.debug(f'Connection to {peer}:{port} closed: {e}')
@@ -198,4 +198,11 @@ Yes, in the BitTorrent protocol, the bitfield message sent between peers is cons
 Each bit in the bitfield corresponds to a piece in the torrent file, and the value of the bit indicates whether the peer has that piece or not. So, if two peers are sharing the same torrent file, they should have the same length bitfield and the same set of bits indicating which pieces they have.
 
 However, it's worth noting that not all peers will have the complete set of pieces for a given torrent file. Peers may join or leave the swarm at different times, and some may have slower download speeds or limited storage capacity, which can affect which pieces they have available. So, while the length of the bitfield message is constant, the specific set of pieces indicated by each peer may differ.
+
+Progress:
+
+Zapisuj odebrane dane z s.recv do bufora, czytaj je po kolei.
+Przekazuj bufor dalej
+def parse(self):
+https://github.com/eliasson/pieces/blob/500c833cd3360c8d605376f73a5e79bb03781b57/pieces/protocol.py#L248
 '''
