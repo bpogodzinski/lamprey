@@ -232,7 +232,6 @@ class Port(Message):
 
 ID_to_msg_class = {
                    None:KeepAlive,
-                     -1:KeepAlive,
                       0:Choke,
                       1:Unchoke,
                       2:Interested,

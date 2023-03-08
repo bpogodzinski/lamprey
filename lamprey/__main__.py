@@ -7,10 +7,67 @@ from datetime import datetime
 import bencoding
 import struct
 import bitstring
-from lamprey.dataclass import Torrent, Interested, ID_to_msg_class
+from lamprey.dataclass import Torrent, Have, Piece, Request, Cancel, Choke, KeepAlive, Bitfield, Interested, ID_to_msg_class
 from lamprey.tracker import Tracker
 
 from lamprey.common import format_bytes
+
+class BufferMessageIterator:
+    BUFFER_HEADER_LENGTH = 4
+    def __init__(self, buffer, socket):
+        self._buffer = buffer if buffer else b''
+        self._socket = socket
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while True:
+
+            try:
+                if len(self._buffer) < 4:
+                    self._buffer += s.recv(10*1024)
+                
+                # jeśli bufor jest pusty to dorzuć kolejną paczkę danych z s.recv
+                
+                # sprawdź długość oraz id wiadomości
+                # Co to za wiadomość
+                message_length = struct.unpack('>I', self._buffer[0:4])[0]
+                message_id = struct.unpack('>b', self._buffer[4:5])[0] if message_length > 0 else None
+                
+                # co to jest za wiadomość (z id wiadomości chce mieć klase wiadomości)
+                # jeśli wiadomość ma ze sobą payload to chce dostać surowe dane TCP i je zdekodować w odpowiedniej
+                # klasie za pomocą Nazwa_klasy.decode(dane_binarne)
+                logging.debug(f'''
+                    Message from: {peer}
+                    Message length: {message_length}
+                    Message ID: {message_id} {ID_to_msg_class[message_id]}
+                ''')
+                
+                if message_length == 0:
+                    return KeepAlive()
+                
+                print(f"buffor przed usunięciem: {self._buffer.hex(' ')}")
+                # Messages with payload
+                if message_id in [Bitfield.ID, Have.ID, Piece.ID, Request.ID, Cancel.ID]:
+                    peer_message = self._buffer[:message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH]
+                    # usuń pobrane dane z bufora
+                    self._buffer = self._buffer[message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH:]
+                    print(f"buffor po usunięciu: {self._buffer.hex(' ')}")
+                    return ID_to_msg_class[message_id].decode(peer_message)
+                # Messages without payload
+                else:
+                    self._buffer = self._buffer[BufferMessageIterator.BUFFER_HEADER_LENGTH + message_length:]
+                    print(f"buffor po usunięciu: {self._buffer.hex(' ')}")
+                    return ID_to_msg_class[message_id]()
+                    # jeśli zła wiadomość to stop iteration
+                    raise StopIteration()
+            # TODO: Implementacja StopIteration w naszym iteratorze
+            except XYZ as e:
+                pass
+
+
+            
 
 def handshake(peer) -> bool:
     handshake_format = '!B19s8x20s20s'
@@ -155,20 +212,22 @@ for peer in peers_list:
 
         # Get the peer responce and decode
         # the lenght and the type of the message
-        peer_response = s.recv(10*1024)
-        if len(peer_response) < 4:
-            raise ConnectionResetError('Peer sent empty response')
-        message_length = struct.unpack('>I', peer_response[0:4])[0]
-        message_id = struct.unpack('>b', peer_response[4:5])[0] if message_length > 0 else None
-        message_payload = None
-        if message_id == 5:
-            message_payload = bitstring.BitArray(peer_response[5:message_length]).bin
-        logging.debug(f'''
-            Message from: {peer}
-            Message length: {message_length}
-            Message ID: {message_id} {ID_to_msg_class[message_id]}
-            Message payload: {message_payload}
-            ''')
+        # peer_response = s.recv(10*1024)
+        for message in BufferMessageIterator([], s):
+            pass
+            
+
+        # message_length = struct.unpack('>I', peer_response[0:4])[0]
+        # message_id = struct.unpack('>b', peer_response[4:5])[0] if message_length > 0 else None
+        # message_payload = None
+        # if message_id == 5:
+        #     message_payload = bitstring.BitArray(peer_response[5:message_length]).bin
+        # logging.debug(f'''
+        #     Message from: {peer}
+        #     Message length: {message_length}
+        #     Message ID: {message_id} {ID_to_msg_class[message_id]}
+        #     Message payload: {message_payload}
+        #     ''')
 
         # Inform peer that we are interested in downloading pieces
         msg = Interested()
