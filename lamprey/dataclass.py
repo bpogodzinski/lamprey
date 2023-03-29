@@ -185,8 +185,10 @@ class Bitfield(Message):
 
     def encode(self):
         pass
-    def decode(self):
-        pass
+
+    @classmethod
+    def decode(cls, bitfield):
+        return Bitfield(bitfield)
 
 class Request(Message):
     ID = 6
@@ -231,6 +233,7 @@ class Port(Message):
         raise NotImplementedError('Peer Port decode message not implemented')
 
 ID_to_msg_class = {
+                     -1:KeepAlive,
                    None:KeepAlive,
                       0:Choke,
                       1:Unchoke,

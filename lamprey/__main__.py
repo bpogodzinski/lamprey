@@ -14,9 +14,9 @@ from lamprey.common import format_bytes
 
 class BufferMessageIterator:
     BUFFER_HEADER_LENGTH = 4
-    def __init__(self, buffer, socket):
-        self._buffer = buffer if buffer else b''
-        self._socket = socket
+    def __init__(self, main_socket):
+        self._buffer = b''
+        self._socket = main_socket
 
     def __iter__(self):
         return self
@@ -26,7 +26,7 @@ class BufferMessageIterator:
 
             try:
                 if len(self._buffer) < 4:
-                    self._buffer += s.recv(10*1024)
+                    self._buffer += self._socket.recv(10*1024)
                 
                 # jeśli bufor jest pusty to dorzuć kolejną paczkę danych z s.recv
                 
@@ -50,9 +50,21 @@ class BufferMessageIterator:
                 print(f"buffor przed usunięciem: {self._buffer.hex(' ')}")
                 # Messages with payload
                 if message_id in [Bitfield.ID, Have.ID, Piece.ID, Request.ID, Cancel.ID]:
+                    # TODO: Sprawdź czy peer_message ma taką długość jaką zapowiadał w message_length. 
+                    # Jeśli nie to znaczy że nie otrzymaliśmy całej wiadomości i dociągnijmy ręcznie 
+                    # brakujące dane
+                    buffer_size = len(self._buffer)
                     peer_message = self._buffer[:message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH]
-                    # usuń pobrane dane z bufora
-                    self._buffer = self._buffer[message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH:]
+                    peer_message_len = len(peer_message)
+                    if peer_message_len < message_length:
+                        logging.debug(f'Śmieć kłamał pm: {peer_message_len} ml: {message_length}')
+                        self._buffer += self._socket.recv(message_length - peer_message_len + BufferMessageIterator.BUFFER_HEADER_LENGTH)
+                        print(f"buffor po dociągnięciu: {self._buffer.hex(' ')}")
+                        peer_message += self._buffer[:message_length - peer_message_len+ BufferMessageIterator.BUFFER_HEADER_LENGTH]
+                        self._buffer = self._buffer[message_length - peer_message_len + BufferMessageIterator.BUFFER_HEADER_LENGTH + buffer_size:]
+                    else:                    
+                        # usuń pobrane dane z bufora
+                        self._buffer = self._buffer[message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH:]
                     print(f"buffor po usunięciu: {self._buffer.hex(' ')}")
                     return ID_to_msg_class[message_id].decode(peer_message)
                 # Messages without payload
@@ -63,8 +75,9 @@ class BufferMessageIterator:
                     # jeśli zła wiadomość to stop iteration
                     raise StopIteration()
             # TODO: Implementacja StopIteration w naszym iteratorze
-            except XYZ as e:
-                pass
+            except KeyError as e:
+                logging.debug(f'Unknown message ID: {message_id}')
+                
 
 
             
@@ -213,9 +226,15 @@ for peer in peers_list:
         # Get the peer responce and decode
         # the lenght and the type of the message
         # peer_response = s.recv(10*1024)
-        for message in BufferMessageIterator([], s):
-            pass
+        keep_alive_counter=0
+        for message in BufferMessageIterator(s):
+            if isinstance(message, KeepAlive):
+                keep_alive_counter =+1
             
+            if keep_alive_counter == 3:
+                break
+
+
 
         # message_length = struct.unpack('>I', peer_response[0:4])[0]
         # message_id = struct.unpack('>b', peer_response[4:5])[0] if message_length > 0 else None
