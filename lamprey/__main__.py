@@ -28,8 +28,8 @@ class BufferMessageIterator:
                 if len(self._buffer) < 4:
                     self._buffer += self._socket.recv(10*1024)
                 
-                # jeśli bufor jest pusty to dorzuć kolejną paczkę danych z s.recv
-                
+                logging.debug(f'Buffor on start {self._buffer.hex(" ")}')
+
                 # sprawdź długość oraz id wiadomości
                 # Co to za wiadomość
                 message_length = struct.unpack('>I', self._buffer[0:4])[0]
@@ -47,30 +47,30 @@ class BufferMessageIterator:
                 if message_length == 0:
                     return KeepAlive()
                 
-                print(f"buffor przed usunięciem: {self._buffer.hex(' ')}")
                 # Messages with payload
                 if message_id in [Bitfield.ID, Have.ID, Piece.ID, Request.ID, Cancel.ID]:
-                    # TODO: Sprawdź czy peer_message ma taką długość jaką zapowiadał w message_length. 
-                    # Jeśli nie to znaczy że nie otrzymaliśmy całej wiadomości i dociągnijmy ręcznie 
-                    # brakujące dane
                     buffer_size = len(self._buffer)
                     peer_message = self._buffer[:message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH]
                     peer_message_len = len(peer_message)
                     if peer_message_len < message_length:
-                        logging.debug(f'Śmieć kłamał pm: {peer_message_len} ml: {message_length}')
+                        logging.warning(f'Buffor size is len {buffer_size} and the message is len {message_length}, Getting the rest of the data from socket')
+                        # Get the rest of missing data to buffer
                         self._buffer += self._socket.recv(message_length - peer_message_len + BufferMessageIterator.BUFFER_HEADER_LENGTH)
-                        print(f"buffor po dociągnięciu: {self._buffer.hex(' ')}")
+                        logging.warning(f'Buffer after recv {self._buffer.hex(" ")}')
                         peer_message += self._buffer[:message_length - peer_message_len+ BufferMessageIterator.BUFFER_HEADER_LENGTH]
-                        self._buffer = self._buffer[message_length - peer_message_len + BufferMessageIterator.BUFFER_HEADER_LENGTH + buffer_size:]
-                    else:                    
+                        # TODO 05.04 Sprawdź usuwanie bufora w tym ifie, coś jest mocno skopane. Usuwaj go dobrze a potem przejdz do refaktoryzacji BufferMessageIterator a potem do ściągania plików
+                        self._buffer = self._buffer[message_length - peer_message_len + BufferMessageIterator.BUFFER_HEADER_LENGTH:]
+                    else:
                         # usuń pobrane dane z bufora
                         self._buffer = self._buffer[message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH:]
-                    print(f"buffor po usunięciu: {self._buffer.hex(' ')}")
+                    
+                    logging.debug(f'Buffer after data consumption {self._buffer.hex(" ")}')
+                    # Return message with payload
                     return ID_to_msg_class[message_id].decode(peer_message)
                 # Messages without payload
                 else:
                     self._buffer = self._buffer[BufferMessageIterator.BUFFER_HEADER_LENGTH + message_length:]
-                    print(f"buffor po usunięciu: {self._buffer.hex(' ')}")
+                    # Return message without payload
                     return ID_to_msg_class[message_id]()
                     # jeśli zła wiadomość to stop iteration
                     raise StopIteration()
@@ -212,7 +212,6 @@ for peer in peers_list:
 
         # Initiate connection with peer
         
-        # TODO, dac 5 prob połączenia handshake 
         for i in range(5):
             success = handshake(peer)
             logging.debug(f'Handshake attempt {i+1}: {"Success" if success else "Failed"}')
@@ -227,9 +226,13 @@ for peer in peers_list:
         # the lenght and the type of the message
         # peer_response = s.recv(10*1024)
         keep_alive_counter=0
+        recieved_bitfield = None
         for message in BufferMessageIterator(s):
+            if isinstance(message, Bitfield):
+                logging.debug(f'Got bitfield message')
+                recieved_bitfield = message
             if isinstance(message, KeepAlive):
-                keep_alive_counter =+1
+                keep_alive_counter += 1
             
             if keep_alive_counter == 3:
                 break

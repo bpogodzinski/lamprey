@@ -1,5 +1,5 @@
 import struct
-import logging
+import bitstring
 
 class Torrent():
     def __init__(self, comment, created_by, creation_date,
@@ -187,8 +187,13 @@ class Bitfield(Message):
         pass
 
     @classmethod
-    def decode(cls, bitfield):
-        return Bitfield(bitfield)
+    def decode(cls, bitfield_message):
+        processed_message_metadata = struct.unpack('!Ib', bitfield_message[0:5])
+        # Remove 1, left out message ID
+        bitfield_len = processed_message_metadata[0] - 1
+        bitfield_array = bitstring.BitArray(bitfield_message[6:bitfield_len])
+        assert len(bitfield_array.bin) % 8 == 0
+        return Bitfield(bitfield_array)
 
 class Request(Message):
     ID = 6
