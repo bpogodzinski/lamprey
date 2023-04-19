@@ -238,7 +238,6 @@ class Port(Message):
         raise NotImplementedError('Peer Port decode message not implemented')
 
 ID_to_msg_class = {
-                     -1:KeepAlive,
                    None:KeepAlive,
                       0:Choke,
                       1:Unchoke,

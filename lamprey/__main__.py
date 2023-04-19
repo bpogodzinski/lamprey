@@ -5,101 +5,12 @@ import logging
 import os
 from datetime import datetime
 import bencoding
-import struct
 import bitstring
-from lamprey.dataclass import Torrent, Have, Piece, Request, Cancel, Choke, KeepAlive, Bitfield, Interested, ID_to_msg_class
+from lamprey.dataclass import Torrent, KeepAlive, Bitfield
+from lamprey.protocol import handshake, BufferMessageIterator
 from lamprey.tracker import Tracker
 
 from lamprey.common import format_bytes
-
-class BufferMessageIterator:
-    BUFFER_HEADER_LENGTH = 4
-    def __init__(self, main_socket):
-        self._buffer = b''
-        self._socket = main_socket
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        while True:
-
-            try:
-                if len(self._buffer) < 4:
-                    self._buffer += self._socket.recv(10*1024)
-                
-                logging.debug(f'Buffor on start {self._buffer.hex(" ")}')
-
-                # sprawdź długość oraz id wiadomości
-                # Co to za wiadomość
-                message_length = struct.unpack('>I', self._buffer[0:4])[0]
-                message_id = struct.unpack('>b', self._buffer[4:5])[0] if message_length > 0 else None
-                
-                # co to jest za wiadomość (z id wiadomości chce mieć klase wiadomości)
-                # jeśli wiadomość ma ze sobą payload to chce dostać surowe dane TCP i je zdekodować w odpowiedniej
-                # klasie za pomocą Nazwa_klasy.decode(dane_binarne)
-                logging.debug(f'''
-                    Message from: {peer}
-                    Message length: {message_length}
-                    Message ID: {message_id} {ID_to_msg_class[message_id]}
-                ''')
-                
-                if message_length == 0:
-                    return KeepAlive()
-                
-                # Messages with payload
-                if message_id in [Bitfield.ID, Have.ID, Piece.ID, Request.ID, Cancel.ID]:
-                    buffer_size = len(self._buffer)
-                    peer_message = self._buffer[:message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH]
-                    peer_message_len = len(peer_message)
-                    if peer_message_len < message_length:
-                        logging.warning(f'Buffor size is len {buffer_size} and the message is len {message_length}, Getting the rest of the data from socket')
-                        # Get the rest of missing data to buffer
-                        self._buffer += self._socket.recv(message_length - peer_message_len + BufferMessageIterator.BUFFER_HEADER_LENGTH)
-                        logging.warning(f'Buffer after recv {self._buffer.hex(" ")}')
-                        peer_message += self._buffer[:message_length - peer_message_len+ BufferMessageIterator.BUFFER_HEADER_LENGTH]
-                        # TODO 05.04 Sprawdź usuwanie bufora w tym ifie, coś jest mocno skopane. Usuwaj go dobrze a potem przejdz do refaktoryzacji BufferMessageIterator a potem do ściągania plików
-                        self._buffer = self._buffer[message_length - peer_message_len + BufferMessageIterator.BUFFER_HEADER_LENGTH:]
-                    else:
-                        # usuń pobrane dane z bufora
-                        self._buffer = self._buffer[message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH:]
-                    
-                    logging.debug(f'Buffer after data consumption {self._buffer.hex(" ")}')
-                    # Return message with payload
-                    return ID_to_msg_class[message_id].decode(peer_message)
-                # Messages without payload
-                else:
-                    self._buffer = self._buffer[BufferMessageIterator.BUFFER_HEADER_LENGTH + message_length:]
-                    # Return message without payload
-                    return ID_to_msg_class[message_id]()
-                    # jeśli zła wiadomość to stop iteration
-                    raise StopIteration()
-            # TODO: Implementacja StopIteration w naszym iteratorze
-            except KeyError as e:
-                logging.debug(f'Unknown message ID: {message_id}')
-                
-
-
-            
-
-def handshake(peer) -> bool:
-    handshake_format = '!B19s8x20s20s'
-
-    logging.debug(f'Handshake attempt to {peer}:{port}')
-    message = struct.pack(handshake_format, 19, 'BitTorrent protocol'.encode('utf-8'),
-                          tracker.info_hash, tracker.peer_id.encode('utf-8'))
-    s.sendall(message)
-    handshake_data = s.recv(68)
-    if len(handshake_data) < 68:
-        logging.debug(f'Handshake attempt to {peer}:{port} failed: Invalid handshake response')
-        return False
-    peer_response = struct.unpack(handshake_format, handshake_data)
-    if peer_response[2] != tracker.info_hash:
-        logging.error('Peer does not have the same infohash')
-        exit(1) # Something wrong with tracker, not important right now and rarely happens
-    logging.debug(
-            f'Handshake recevied from {peer}:{port}\n{peer_response}')
-    return True
 
 # TODO: Zapisuj stan połączenia
 # >Each client starts in the state choked and not interested.
@@ -202,18 +113,15 @@ for peer in peers_list:
     try:
         list_peer = peer.split(':')
         peer = list_peer[0]
+        # if peer != "95.168.168.203":
+        #     continue
         port = int(list_peer[1])
 
-        # Setup connection
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(10)
-        s.connect((peer, port))
-        s.settimeout(None)
+        s = socket.create_connection((peer, port), timeout=5)
 
         # Initiate connection with peer
-        
         for i in range(5):
-            success = handshake(peer)
+            success = handshake(s, tracker)
             logging.debug(f'Handshake attempt {i+1}: {"Success" if success else "Failed"}')
             if success:
                 break
@@ -252,13 +160,15 @@ for peer in peers_list:
         #     ''')
 
         # Inform peer that we are interested in downloading pieces
-        msg = Interested()
-        s.sendall(msg.encode())
-        logging.debug(f'Sending interested message to: {peer}')
+        # msg = Interested()
+        # s.sendall(msg.encode())
+        # logging.debug(f'Sending interested message to: {peer}')
 
-    except OSError as e:
-        logging.debug(f'Connection to {peer}:{port} closed: {e}')
-        s.close()
+    except ConnectionRefusedError as e:
+        logging.debug(f'Connection to {peer}:{port}: {e}')
+        continue
+    except TimeoutError as e:
+        logging.debug(f'Connection to {peer}:{port}: {e}')
         continue
 
 
