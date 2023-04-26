@@ -6,11 +6,11 @@ import os
 from datetime import datetime
 import bencoding
 import bitstring
-from lamprey.dataclass import Torrent, KeepAlive, Bitfield
+from lamprey.dataclass import Torrent, KeepAlive, Choke, Unchoke, Interested, Not_Interested, Have, Bitfield, Request, Piece, Cancel, Port
 from lamprey.protocol import handshake, BufferMessageIterator
 from lamprey.tracker import Tracker
 
-from lamprey.common import format_bytes
+from lamprey.common import format_bytes, check_user_disk_space
 
 # TODO: Zapisuj stan połączenia
 # >Each client starts in the state choked and not interested.
@@ -21,6 +21,10 @@ from lamprey.common import format_bytes
 # Unchoked A unchoked peer is allowed to request pieces from the other peer.
 # Interested Indicates that a peer is interested in requesting pieces.
 # Not interested Indicates that the peer is not interested in requesting pieces.
+
+# state = []
+# state.append(KeepAlive)
+# state.append(Bitfield)
 
 # TODO: Sprawdź czy użytkownik ma odpowiednio dużo przestrzeni dyskowej na plik
 # Sprawdź pojemność dysku na który wskazuje path
@@ -113,9 +117,10 @@ for peer in peers_list:
     try:
         list_peer = peer.split(':')
         peer = list_peer[0]
-        # if peer != "95.168.168.203":
-        #     continue
         port = int(list_peer[1])
+        keep_alive_counter=0
+        recieved_bitfield = None
+        state = []
 
         s = socket.create_connection((peer, port), timeout=5)
 
@@ -129,22 +134,59 @@ for peer in peers_list:
             logging.debug(f'5 Handshake attempts were failed, skipping peer')
             continue
 
+        state.append(Choke)
 
+        
         # Get the peer responce and decode
-        # the lenght and the type of the message
-        # peer_response = s.recv(10*1024)
-        keep_alive_counter=0
-        recieved_bitfield = None
+        # the length and the type of the message
         for message in BufferMessageIterator(s):
-            if isinstance(message, Bitfield):
-                logging.debug(f'Got bitfield message')
-                recieved_bitfield = message
             if isinstance(message, KeepAlive):
                 keep_alive_counter += 1
-            
-            if keep_alive_counter == 3:
-                break
 
+            elif isinstance(message, Choke):
+                logging.debug('Got choke message')
+
+            elif isinstance(message, Unchoke):
+                logging.debug('Got Unchoke message')
+                # skoro unchoke to wyślij interested
+
+            elif isinstance(message, Interested):
+                logging.debug('Got Interested message')
+                # nie robimy nic bo nie seedujemy
+
+            elif isinstance(message, Not_Interested):
+                logging.debug('Got Not_Interested message')
+                # nie robimy nic bo nie seedujemy
+
+            elif isinstance(message, Have):
+                logging.debug('Got Have message')
+                # peer mówi że ma ten kawałek pliku
+                # zaaktualizować bitfield
+                # recieved_bitfield[piece_index] = 1
+
+            elif isinstance(message, Bitfield):
+                logging.debug('Got Bitfield message')
+                recieved_bitfield = message.bitfield
+
+            elif isinstance(message, Request):
+                logging.debug('Got Request message')
+                # nie robimy nic bo nie seedujemy
+
+            elif isinstance(message, Piece):
+                logging.debug('Got Piece message')
+                # peer wysłał nam kawałek pliku, zapisz go
+
+            elif isinstance(message, Cancel):
+                logging.debug('Got Cancel message')
+                # nie robimy nic bo nie seedujemy
+
+            elif isinstance(message, Port):
+                logging.debug('Got Port message')
+                # nie robimy nic bo nie implementujemy DHT (jeszcze)
+
+                              
+            
+            
 
 
         # message_length = struct.unpack('>I', peer_response[0:4])[0]
@@ -170,30 +212,3 @@ for peer in peers_list:
     except TimeoutError as e:
         logging.debug(f'Connection to {peer}:{port}: {e}')
         continue
-
-
-'''
-1. A torrents data is split into N number of pieces of equal size (except the last piece in a torrent, which might be of smaller size than the others)
-
-2. The piece length is specified in the .torrent file. Typically pieces are of sizes 512 kB or less, and should be a power of 2.
-
-N - ilość pieces == bitfield
-
-czyli N * piece length >= długość całego torrenta
-N >= długość torrenta / piece length
-
-https://stackoverflow.com/questions/44308457/confusion-around-bitfield-torrent - size of bitfield
-
-Yes, in the BitTorrent protocol, the bitfield message sent between peers is constant for a given torrent file. The length of the bitfield message is determined by the number of pieces in the torrent file, and this value is the same for all peers sharing the same torrent.
-
-Each bit in the bitfield corresponds to a piece in the torrent file, and the value of the bit indicates whether the peer has that piece or not. So, if two peers are sharing the same torrent file, they should have the same length bitfield and the same set of bits indicating which pieces they have.
-
-However, it's worth noting that not all peers will have the complete set of pieces for a given torrent file. Peers may join or leave the swarm at different times, and some may have slower download speeds or limited storage capacity, which can affect which pieces they have available. So, while the length of the bitfield message is constant, the specific set of pieces indicated by each peer may differ.
-
-Progress:
-
-Zapisuj odebrane dane z s.recv do bufora, czytaj je po kolei.
-Przekazuj bufor dalej
-def parse(self):
-https://github.com/eliasson/pieces/blob/500c833cd3360c8d605376f73a5e79bb03781b57/pieces/protocol.py#L248
-'''
