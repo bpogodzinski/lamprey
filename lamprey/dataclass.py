@@ -203,8 +203,8 @@ class Request(Message):
         self.length = length
 
     def encode(self):
-        format_string = f'!B'
-        # return struct.pack(format_string, self.length)
+        format_string = f'!IbIII'
+        return struct.pack(format_string, 13, Request.ID, self.index, self.begin, self.length)
 
     def decode(self):
         raise NotImplementedError('Peer Request decode message not implemented')
