@@ -211,6 +211,8 @@ class Request(Message):
 
 class Piece(Message):
     ID = 7
+    LEN_WITHOUT_BLOCK_DATA = 9
+
     def __init__ (self, index, begin, block):
         self.index = index
         self.begin = begin
@@ -218,8 +220,16 @@ class Piece(Message):
 
     def encode(self):
         pass
-    def decode(self):
-        pass
+
+    @classmethod
+    def decode(cls, piece_message):
+        length = struct.unpack('>I', piece_message[:4])[0]
+        parts = struct.unpack('>IbII' + str(length - Piece.LEN_WITHOUT_BLOCK_DATA) + 's',
+                              piece_message[:length+4])
+        return cls(parts[2], parts[3], parts[4])
+    
+    def __str__(self) -> str:
+        return f'index: {self.index} begin: {self.begin} block: {self.block}'
 
 class Cancel(Message):
     ID = 8

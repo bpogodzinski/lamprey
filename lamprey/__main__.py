@@ -175,7 +175,7 @@ for peer in peers_list:
                 # nie robimy nic bo nie seedujemy
 
             elif isinstance(message, Piece):
-                logging.debug(f'Recevied Piece message from {s.getpeername()}')
+                logging.debug(f'Recevied Piece message from {s.getpeername()} {message}')
                 # peer wysłał nam kawałek pliku, zapisz go
 
             elif isinstance(message, Cancel):
@@ -220,4 +220,5 @@ for peer in peers_list:
         continue
     except TimeoutError as e:
         logging.debug(f'Connection to {peer}:{port}: {e}')
-        continue
+    except OSError as e:
+        logging.debug(f'Connection to {peer}:{port}: {e}')
