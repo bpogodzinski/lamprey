@@ -136,7 +136,8 @@ for peer in peers_list:
 
         state.append(Choke)
 
-        
+
+        temp_flag = 1
         # Get the peer responce and decode
         # the length and the type of the message
         for message in BufferMessageIterator(s):
@@ -144,46 +145,54 @@ for peer in peers_list:
                 keep_alive_counter += 1
 
             elif isinstance(message, Choke):
-                logging.debug('Got choke message')
+                # Can't download pieces from peer
+                logging.debug(f'Recevied Choke message from {s.getpeername()}')
 
             elif isinstance(message, Unchoke):
-                logging.debug('Got Unchoke message')
-                # skoro unchoke to wyślij interested
+                # Can request pieces from peer
+                logging.debug(f'Recevied Unchoke message from {s.getpeername()}')
 
             elif isinstance(message, Interested):
-                logging.debug('Got Interested message')
+                logging.debug(f'Recevied Interested message from {s.getpeername()}')
                 # nie robimy nic bo nie seedujemy
 
             elif isinstance(message, Not_Interested):
-                logging.debug('Got Not_Interested message')
+                logging.debug(f'Recevied Not_Interested message from {s.getpeername()}')
                 # nie robimy nic bo nie seedujemy
 
             elif isinstance(message, Have):
-                logging.debug('Got Have message')
+                logging.debug(f'Recevied Have message from {s.getpeername()}')
                 # peer mówi że ma ten kawałek pliku
                 # zaaktualizować bitfield
                 # recieved_bitfield[piece_index] = 1
 
             elif isinstance(message, Bitfield):
-                logging.debug('Got Bitfield message')
+                logging.debug(f'Recevied Bitfield message from {s.getpeername()}')
                 recieved_bitfield = message.bitfield
 
             elif isinstance(message, Request):
-                logging.debug('Got Request message')
+                logging.debug(f'Recevied Request message from {s.getpeername()}')
                 # nie robimy nic bo nie seedujemy
 
             elif isinstance(message, Piece):
-                logging.debug('Got Piece message')
+                logging.debug(f'Recevied Piece message from {s.getpeername()}')
                 # peer wysłał nam kawałek pliku, zapisz go
 
             elif isinstance(message, Cancel):
-                logging.debug('Got Cancel message')
+                logging.debug(f'Recevied Cancel message from {s.getpeername()}')
                 # nie robimy nic bo nie seedujemy
 
             elif isinstance(message, Port):
-                logging.debug('Got Port message')
+                logging.debug(f'Recevied Port message from {s.getpeername()}')
                 # nie robimy nic bo nie implementujemy DHT (jeszcze)
-
+            if temp_flag == 1:
+                temp_flag = 2
+                s.sendall(Interested().encode())
+                logging.debug(f'Sent Interested message to {s.getpeername()}')
+                s.sendall(Choke().encode())
+                logging.debug(f'Sent Choke message to {s.getpeername()}')
+                s.sendall(Request(0, 10, 10).encode())
+                logging.debug(f'Sent Request message to {s.getpeername()}')
                               
             
             
