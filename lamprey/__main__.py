@@ -120,9 +120,9 @@ for peer in peers_list:
         port = int(list_peer[1])
         keep_alive_counter=0
         recieved_bitfield = None
-        state = []
+        state = set()
 
-        s = socket.create_connection((peer, port), timeout=5)
+        s = socket.create_connection((peer, port), timeout=30)
 
         # Initiate connection with peer
         for i in range(5):
@@ -134,10 +134,12 @@ for peer in peers_list:
             logging.debug(f'5 Handshake attempts were failed, skipping peer')
             continue
 
-        state.append(Choke)
+        state.add(Choke)
 
 
+        import time
         temp_flag = 1
+        pieces_list = None
         # Get the peer responce and decode
         # the length and the type of the message
         for message in BufferMessageIterator(s):
@@ -147,11 +149,19 @@ for peer in peers_list:
             elif isinstance(message, Choke):
                 # Can't download pieces from peer
                 logging.debug(f'Recevied Choke message from {s.getpeername()}')
+                state.add(Choke)
+                if Unchoke in state:
+                    logging.debug(f'{s.getpeername()} started choking')
+                    state.remove(Unchoke)
 
             elif isinstance(message, Unchoke):
                 # Can request pieces from peer
                 logging.debug(f'Recevied Unchoke message from {s.getpeername()}')
-
+                state.add(Unchoke)
+                if Choke in state:
+                    logging.debug(f'{s.getpeername()} stopped choking')
+                    state.remove(Choke)
+                
             elif isinstance(message, Interested):
                 logging.debug(f'Recevied Interested message from {s.getpeername()}')
                 # nie robimy nic bo nie seedujemy
@@ -185,14 +195,25 @@ for peer in peers_list:
             elif isinstance(message, Port):
                 logging.debug(f'Recevied Port message from {s.getpeername()}')
                 # nie robimy nic bo nie implementujemy DHT (jeszcze)
+            
+            # Timestep debug
             if temp_flag == 1:
-                temp_flag = 2
+                temp_flag = 3
                 s.sendall(Interested().encode())
                 logging.debug(f'Sent Interested message to {s.getpeername()}')
                 s.sendall(Choke().encode())
                 logging.debug(f'Sent Choke message to {s.getpeername()}')
-                s.sendall(Request(0, 10, 10).encode())
-                logging.debug(f'Sent Request message to {s.getpeername()}')
+                
+            elif temp_flag == 3:
+                temp_flag = 5
+                # Send first piece request
+                pieces_list = torrent_info.get_pieces[0]
+                REQUEST_SIZE = 2**14
+                index = 0
+                s.sendall(Request(index, ))
+
+            # time.sleep(0.001)
+            temp_flag = temp_flag + 1
                               
             
             
