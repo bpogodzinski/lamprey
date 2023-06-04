@@ -96,6 +96,13 @@ logging.info(torrent_information)
 torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])),  (
     torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']), (torrent[b'announce']), (torrent[b'announce-list']))
 
+
+
+
+
+
+
+
 tracker = Tracker(torrent_info)
 tracker_response = tracker.connect()
 peers_list = []
@@ -202,18 +209,19 @@ for peer in peers_list:
                 s.sendall(Interested().encode())
                 logging.debug(f'Sent Interested message to {s.getpeername()}')
                 s.sendall(Choke().encode())
+                # import pdb; pdb.set_trace()
                 logging.debug(f'Sent Choke message to {s.getpeername()}')
                 
             elif temp_flag == 3:
                 temp_flag = 5
                 # Send first piece request
-                pieces_list = torrent_info.get_pieces[0]
+                pieces_list = torrent_info.get_pieces()[0]
                 REQUEST_SIZE = 2**14
                 index = 0
-                s.sendall(Request(index, ))
+                s.sendall(Request(index, 0,14).encode())
+                logging.debug(f'Sent Request message to {s.getpeername()}')
+                logging.debug(f'Piece length {torrent_info.get_piece_length()}')
 
-            # time.sleep(0.001)
-            temp_flag = temp_flag + 1
                               
             
             
