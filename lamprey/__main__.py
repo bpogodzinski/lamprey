@@ -9,6 +9,7 @@ import bitstring
 from lamprey.dataclass import Torrent, KeepAlive, Choke, Unchoke, Interested, Not_Interested, Have, Bitfield, Request, Piece, Cancel, Port
 from lamprey.protocol import handshake, BufferMessageIterator
 from lamprey.tracker import Tracker
+import math
 
 from lamprey.common import format_bytes, check_user_disk_space
 
@@ -99,10 +100,34 @@ torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetim
 logging.debug(f'Length {torrent_info.get_length()}')
 logging.debug(f'Piece length {torrent_info.get_piece_length()}')
 
+lol = 262144
 number_of_pieces = torrent_info.get_length() / torrent_info.get_piece_length()
 
-logging.debug(f'Number of pieces is {number_of_pieces}')
+logging.debug(f'Number of pieces is {math.ceil(number_of_pieces)}')
 
+# czemu wychodzi noooon
+
+def pieces_length():
+    p_left_overs = number_of_pieces % 1
+    p_rest = p_left_overs * torrent_info.get_piece_length()
+    if p_rest == 0:
+        return lol
+
+logging.debug(f'Last pieces have {pieces_length()} bytes')
+
+block = 16384
+number_of_blocks = torrent_info.get_piece_length() / block
+
+logging.debug(f'Number of block in pieces is {math.ceil(number_of_blocks)}')
+
+
+def blocks_length():
+    b_left_overs = number_of_blocks % 1
+    b_rest = b_left_overs * torrent_info.get_piece_length()
+    if b_rest == 0:
+        return block
+
+logging.debug(f'Last block have {blocks_length()} bytes')
 
 
 
