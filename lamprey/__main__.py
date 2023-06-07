@@ -100,7 +100,6 @@ torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetim
 logging.debug(f'Length {torrent_info.get_length()}')
 logging.debug(f'Piece length {torrent_info.get_piece_length()}')
 
-lol = 262144
 number_of_pieces = torrent_info.get_length() / torrent_info.get_piece_length()
 
 logging.debug(f'Number of pieces is {math.ceil(number_of_pieces)}')
@@ -111,7 +110,9 @@ def pieces_length():
     p_left_overs = number_of_pieces % 1
     p_rest = p_left_overs * torrent_info.get_piece_length()
     if p_rest == 0:
-        return lol
+        return torrent_info.get_piece_length
+    else:
+        return p_rest
 
 logging.debug(f'Last pieces have {pieces_length()} bytes')
 
@@ -126,6 +127,8 @@ def blocks_length():
     b_rest = b_left_overs * torrent_info.get_piece_length()
     if b_rest == 0:
         return block
+    else:
+        return b_rest
 
 logging.debug(f'Last block have {blocks_length()} bytes')
 
