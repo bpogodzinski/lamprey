@@ -96,13 +96,12 @@ logging.info(torrent_information)
 
 torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetime.fromtimestamp(torrent[b"creation date"])),  (
     torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']), (torrent[b'announce']), (torrent[b'announce-list']))
-
+import pdb; pdb.set_trace()
 logging.debug(f'Length {torrent_info.get_length()}')
 logging.debug(f'Piece length {torrent_info.get_piece_length()}')
 
-number_of_pieces = torrent_info.get_length() / torrent_info.get_piece_length()
-
-logging.debug(f'Number of pieces is {math.ceil(number_of_pieces)}')
+number_of_pieces = math.ceil(torrent_info.get_length() / torrent_info.get_piece_length())
+logging.debug(f'Number of pieces is {number_of_pieces}')
 
 # czemu wychodzi noooon
 
@@ -113,26 +112,79 @@ def pieces_length():
         return torrent_info.get_piece_length
     else:
         return p_rest
-
 logging.debug(f'Last pieces have {pieces_length()} bytes')
 
-block = 16384
-number_of_blocks = torrent_info.get_piece_length() / block
-
-logging.debug(f'Number of block in pieces is {math.ceil(number_of_blocks)}')
-
+block_size = 2**14
+number_of_blocks = math.ceil(torrent_info.get_piece_length() / block_size)
+logging.debug(f'Number of block in pieces is {number_of_blocks}')
 
 def blocks_length():
     b_left_overs = number_of_blocks % 1
     b_rest = b_left_overs * torrent_info.get_piece_length()
     if b_rest == 0:
-        return block
+        return block_size
     else:
         return b_rest
+logging.debug(f'Last block of piece have {blocks_length()} bytes')
 
-logging.debug(f'Last block have {blocks_length()} bytes')
+# 07.06 notatki
 
 
+def last_block_last_piece():
+    
+    pass
+
+
+# podgląd lowlewel jak to wygląda
+piece_list = [] # number of pieces
+piece_list.append((0, 0, block_size)) # 1st block, 1st piece
+piece_list.append((0, block_size, block_size)) # 2nd block, 1st piece
+piece_list.append((0, 2*block_size, block_size)) # 3rd block, 1st piece
+piece_list.append((0, 3*block_size, block_size)) # 4th block, 1st piece
+# .... 16 blocks later
+piece_list.append((1, 0, block_size)) # 1st block, 2nd piece
+piece_list.append((1, block_size, block_size)) # 2nd block, 2nd piece
+piece_list.append((0, 2*block_size, block_size)) # 3rd block, 2nd piece
+piece_list.append((0, 3*block_size, block_size)) # 4th block, 2nd piece
+# .... number_of_pieces later
+# .... be careful that the last piece last block is shorter than block_size
+
+class Piece():
+    def __init__(self) -> None:
+        self.block_list = []
+        self.index = None
+        self.is_downloaded = False
+
+class Block():
+    def __init__(self, length = 2**14) -> None:
+        self.start = None
+        self.length = length
+        self.is_downloaded = False
+        self.data = None
+
+xdd = Block()
+kua = Block(15)
+
+dx = Piece()
+dx.block_list.append(xdd)
+dx.block_list.append(kua)
+# aż piece nie ma wszystkich bloków
+
+dxx = Piece()
+dxxx = Piece()
+dxxxx = Piece()
+file = [dxx, dxxx, dxxxx] # 4395 Pieces
+
+# przykład dla 0 piece
+for piece in file:
+    for block in piece:
+        block.download_data() # make_request
+    
+    import sha
+    assert sha1(b''.join([block.data for block in piece.block_list])) == torrent_info.get_pieces()[0]
+
+# Zrobić klase piece managera który bęzie zbierał info o piecach i blokach
+# koniec notatek
 
 tracker = Tracker(torrent_info)
 tracker_response = tracker.connect()
@@ -160,7 +212,7 @@ for peer in peers_list:
         recieved_bitfield = None
         state = set()
 
-        s = socket.create_connection((peer, port), timeout=30)
+        s = socket.create_connection((peer, port), timeout=10)
 
         # Initiate connection with peer
         for i in range(5):
@@ -249,30 +301,8 @@ for peer in peers_list:
                 pieces_list = torrent_info.get_pieces()[0]
                 REQUEST_SIZE = 2**14
                 index = 0
-                s.sendall(Request(index, 0,14).encode())
+                s.sendall(Request(index, 0, 262144).encode())
                 logging.debug(f'Sent Request message to {s.getpeername()}')
-
-                              
-            
-            
-
-
-        # message_length = struct.unpack('>I', peer_response[0:4])[0]
-        # message_id = struct.unpack('>b', peer_response[4:5])[0] if message_length > 0 else None
-        # message_payload = None
-        # if message_id == 5:
-        #     message_payload = bitstring.BitArray(peer_response[5:message_length]).bin
-        # logging.debug(f'''
-        #     Message from: {peer}
-        #     Message length: {message_length}
-        #     Message ID: {message_id} {ID_to_msg_class[message_id]}
-        #     Message payload: {message_payload}
-        #     ''')
-
-        # Inform peer that we are interested in downloading pieces
-        # msg = Interested()
-        # s.sendall(msg.encode())
-        # logging.debug(f'Sending interested message to: {peer}')
 
     except ConnectionRefusedError as e:
         logging.debug(f'Connection to {peer}:{port}: {e}')
