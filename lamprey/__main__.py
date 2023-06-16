@@ -137,71 +137,8 @@ def last_block_of_last_piece():
     else:
         return l_b_rest
 logging.debug(f'Last block of last piece got {math.ceil(last_block_of_last_piece())} bytes ')
-logging.debug(f'Piece List {torrent_info.get_pieces()[4394]}')
-logging.debug(f'1st block 1st piece {torrent_info.get_pieces()[0]}')
-
-import struct
-
-block_list = torrent_info.get_pieces()[0]
-struct.unpack('>IIIIIIIIIIIIIIII', block_list)
-# pierwszy_block_list = block_list / 16
-
-logging.debug(f'Block list of 1st piece{block_list}')
-# 07.06 notatki
-
-
-
-# podgląd lowlewel jak to wygląda
-piece_list = [] # number of pieces
-piece_list.append(torrent_info.get_pieces()[0, 0, block_size]) # 1st block, 1st piece
-logging.debug(f'Piece List {piece_list[0]}')
-piece_list.append((0, block_size, block_size)) # 2nd block, 1st piece
-piece_list.append((0, 2*block_size, block_size)) # 3rd block, 1st piece
-piece_list.append((0, 3*block_size, block_size)) # 4th block, 1st piece
-# .... 16 blocks later
-piece_list.append((1, 0, block_size)) # 1st block, 2nd piece
-piece_list.append((1, block_size, block_size)) # 2nd block, 2nd piece
-piece_list.append((0, 2*block_size, block_size)) # 3rd block, 2nd piece
-piece_list.append((0, 3*block_size, block_size)) # 4th block, 2nd piece
-# .... number_of_pieces later
-# .... be careful that the last piece last block is shorter than block_size
-
-class Piece():
-    def __init__(self) -> None:
-        self.block_list = []
-        self.index = None
-        self.is_downloaded = False
-
-class Block():
-    def __init__(self, length = 2**14) -> None:
-        self.start = None
-        self.length = length
-        self.is_downloaded = False
-        self.data = None
-
-xdd = Block()
-kua = Block(15)
-
-dx = Piece()
-dx.block_list.append(xdd)
-dx.block_list.append(kua)
-# aż piece nie ma wszystkich bloków
-
-dxx = Piece()
-dxxx = Piece()
-dxxxx = Piece()
-file = [dxx, dxxx, dxxxx] # 4395 Pieces
-
-# przykład dla 0 piece
-for piece in file:
-    for block in piece:
-        block.download_data() # make_request
-    
-    import sha
-    assert sha1(b''.join([block.data for block in piece.block_list])) == torrent_info.get_pieces()[0]
-
-# Zrobić klase piece managera który bęzie zbierał info o piecach i blokach
-# koniec notatek
+logging.debug(f'Piece List {torrent_info.get_pieces_SHA1_list()[4394]}')
+logging.debug(f'1st piece {torrent_info.get_pieces_SHA1_list()[0]}')
 
 tracker = Tracker(torrent_info)
 tracker_response = tracker.connect()
@@ -314,7 +251,7 @@ for peer in peers_list:
             elif temp_flag == 3:
                 temp_flag = 5
                 # Send first piece request
-                pieces_list = torrent_info.get_pieces()[0]
+                pieces_list = torrent_info.get_pieces_SHA1_list()[0]
                 REQUEST_SIZE = 2**14
                 index = 0
                 s.sendall(Request(index, 0, 262144).encode())

@@ -45,7 +45,7 @@ class Torrent():
     def get_announce_list(self):
         return self.announce_list
     
-    def get_pieces(self) -> list:
+    def get_pieces_SHA1_list(self) -> list:
         pieces = self.info[b'pieces']
         byte_array = []
         while len(pieces) > 0:
