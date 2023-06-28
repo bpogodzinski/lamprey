@@ -155,7 +155,9 @@ for peer in range(0, number_of_peers):
     peers_list.append(
         f"{peers[0+offset*peer]}.{peers[1+offset*peer]}.{peers[2+offset*peer]}.{peers[3+offset*peer]}:{int.from_bytes(peers[4+offset*peer:6+offset*peer], byteorder='big')}")
 
-logging.info(f'Active peers ({len(peers_list)}): {peers_list}')
+logging.info(f'Possible peers ({len(peers_list)}): {peers_list}')
+
+# file manager singleton
 
 for peer in peers_list:
     try:

@@ -29,30 +29,26 @@ class Piece:
         return ' '.join(str(block) for block in self.block_list)
 
 
-class FileManager():
-    pass
+class FileManager:
+    def __init__(self, torrent):
+        self.bitfield = create_bitfield()
+        self.peer_bitfield
 
-# obiekt_piece = Piece(index=0)
-# obiekt_block = Block(index=0, content='xd', piece=obiekt_piece)
+        bitfield_lem = ''
+        pass
 
-obiekt_piece = Piece(262144, index=0)
-obiekt_piece1 = Piece(262144, index=1)
-obiekt_piece.block_list.append(Block(piece=obiekt_piece))
-obiekt_piece.block_list.append(Block(piece=obiekt_piece))
-obiekt_piece.block_list.append(Block(piece=obiekt_piece))
-obiekt_piece1.block_list.append(Block(piece=obiekt_piece1))
-obiekt_piece1.block_list.append(Block(piece=obiekt_piece1))
-obiekt_piece1.block_list.append(Block(piece=obiekt_piece1))
+# obiekt_piece = Piece(262144, index=0)
+# obiekt_piece1 = Piece(262144, index=1)
+# obiekt_piece.block_list.append(Block(piece=obiekt_piece))
+# obiekt_piece.block_list.append(Block(piece=obiekt_piece))
+# obiekt_piece.block_list.append(Block(piece=obiekt_piece))
+# obiekt_piece1.block_list.append(Block(piece=obiekt_piece1))
+# obiekt_piece1.block_list.append(Block(piece=obiekt_piece1))
+# obiekt_piece1.block_list.append(Block(piece=obiekt_piece1))
 
-print(str(obiekt_piece))
-print(str(obiekt_piece1))
+# print(str(obiekt_piece))
+# print(str(obiekt_piece1))
 
-obiekt_piece.block_list[0]
+# obiekt_piece.block_list[0]
 
-# obiekt_piece = Piece() # Nie zadziała
-# obiekt_piece = Piece(10) # Zadziała
-# obiekt_piece = Piece(size=10) #Zadziała
-# obiekt_piece = Piece(10, index=0) #Zadziała
-# obiekt_piece = Piece(index=0, 10) # Nie zadziała
-# obiekt_piece = Piece(10,[],is_completed=False, index=0)
-# # obiekt_block = Block(index=0, content='xd', piece=obiekt_piece)
+# 1. stwórz nasz bitfield (wypełniony 0)
