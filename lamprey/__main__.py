@@ -240,6 +240,11 @@ for peer in peers_list:
                 logging.debug(f'Recevied Port message from {s.getpeername()}')
                 # nie robimy nic bo nie implementujemy DHT (jeszcze)
             
+            # elif message is None:
+            #     logging.debug(f'No new messages from {s.getpeername()}')
+                
+
+
             # Timestep debug
             if temp_flag == 1:
                 temp_flag = 3
@@ -254,7 +259,7 @@ for peer in peers_list:
                 pieces_list = torrent_info.get_pieces_SHA1_list()[0]
                 REQUEST_SIZE = 2**14
                 index = 0
-                s.sendall(Request(index, 0, 262144).encode())
+                s.sendall(Request(index, 0, REQUEST_SIZE).encode())
                 logging.debug(f'Sent Request message to {s.getpeername()}')
 
     except ConnectionRefusedError as e:

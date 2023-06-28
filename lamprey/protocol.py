@@ -32,11 +32,10 @@ class BufferMessageIterator:
         return self
 
     def __next__(self):
-        while True:
-            try:
-                if len(self._buffer) < 4:
-                    self._buffer += self._socket.recv(10*1024)
-
+        try:
+            if len(self._buffer) < 4:
+                self._buffer += self._socket.recv(10*1024)
+            if len(self._buffer) >= 4:
                 message_length = struct.unpack('>I', self._buffer[0:4])[0]
                 message_id = struct.unpack('>b', self._buffer[4:5])[0] if message_length > 0 else None
                 logging.debug(f'''
@@ -71,10 +70,14 @@ class BufferMessageIterator:
                 else:
                     self._buffer = self._buffer[BufferMessageIterator.BUFFER_HEADER_LENGTH + message_length:]
                     return ID_to_msg_class[message_id]()
+            
+            # No new messages from peer
+            else:
+                return None
                 
-            except KeyError:
-                logging.error(f'Unknown message ID: {message_id}')
-                raise StopIteration
-            except socket.timeout:
-                logging.debug(f'Peer timeout after {self._socket.gettimeout()} seconds')
-                raise StopIteration
+        except KeyError:
+            logging.error(f'Unknown message ID: {message_id}')
+            raise StopIteration
+        except socket.timeout:
+            logging.debug(f'Peer timeout after {self._socket.gettimeout()} seconds')
+            raise StopIteration
