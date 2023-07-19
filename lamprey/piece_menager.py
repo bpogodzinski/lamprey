@@ -51,4 +51,5 @@ class FileManager:
 
 # obiekt_piece.block_list[0]
 
-# 1. stwórz nasz bitfield (wypełniony 0)
+# 1. stwórz klase my socket która będzie high level interface do low-levelowych socketów, musimy pozbyć się problemu "niedoczytanych" danych
+# 2. stwórz nasz bitfield (wypełniony 0)

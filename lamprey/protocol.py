@@ -22,6 +22,24 @@ def handshake(s: socket.socket, tracker: Tracker) -> bool:
             f'Handshake recevied from {s.getpeername()}')
     return True
 
+
+# https://docs.python.org/3/howto/sockets.html
+# https://code.activestate.com/recipes/408859-socketrecv-three-ways-to-turn-it-into-recvall/
+class PeerSocket(socket):
+    def __init__(self, peer: tuple):
+        pass
+
+    def full_send(self) -> bool:
+        pass
+    
+    def full_recv(self) -> bytes:
+        pass
+
+# Tworzyć połączenie z danym peerem
+# W __pełni__ wysyłać i odbierać wiadomości o danej długości (np message_length otrzymany w recv lub długość naszej wiadomości przy send)
+# Posiadać metody które zwrócą całą wiadomość od peera lub true jak wyślą w pełni wiadomość do peera
+# W pełni otrzymane wiadomości będziemy pakować do self._buffer w BufferMessageIterator
+
 class BufferMessageIterator:
     BUFFER_HEADER_LENGTH = 4
     def __init__(self, main_socket: socket.socket):
@@ -56,10 +74,12 @@ class BufferMessageIterator:
                     
                     # Get the rest of the data from socket if extracted message is shorter than expected
                     if peer_message_len < message_length:
-                        logging.debug(f'Buffor size is len {buffer_size} and the message is len {message_length}, Getting the rest of the data from socket')
+                        logging.debug(f'Buffor size is len {buffer_size} and the message is len {message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH}, Getting the rest of the data from socket')
                         # Get the rest of missing data to buffer
                         bytes_to_download = message_length - peer_message_len + BufferMessageIterator.BUFFER_HEADER_LENGTH
                         self._buffer += self._socket.recv(bytes_to_download)
+                        logging.debug(f'Buffer size after downloading data {len(self._buffer)}')
+                        assert len(self._buffer) == message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH
                         peer_message += self._buffer[:message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH]
                     
                     # Delete last message from buffer
