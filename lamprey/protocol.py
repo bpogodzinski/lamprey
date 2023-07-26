@@ -24,17 +24,27 @@ def handshake(s: socket.socket, tracker: Tracker) -> bool:
 
 
 # https://docs.python.org/3/howto/sockets.html
-# https://code.activestate.com/recipes/408859-socketrecv-three-ways-to-turn-it-into-recvall/
-class PeerSocket(socket):
-    def __init__(self, peer: tuple):
-        pass
+# https://code.activestatARG UDA_DIRe.com/recipes/408859-socketrecv-three-ways-to-turn-it-into-recvall/
+class PeerSocket():
+    def __init__(self, peer_socket):
+        self.socket = peer_socket
 
-    def full_send(self) -> bool:
-        pass
+    def create_connection(address, timeout=10,
+                      source_address=None, *, all_errors=False):
+        return PeerSocket(socket.create_connection(address, timeout))
+
+
+    def full_recv(self, total_data = None, n = 0) -> bytes:
+        total_data = []
+        bytes_recd = 0
+        while bytes_recd < n:
+            total_data = self.PeerSocket.recv(min(n - bytes_recd, 2048))
+            if total_data == b'':
+                raise RuntimeError("socket connection broken")
+            total_data.append(total_data)
+            bytes_recd = bytes_recd + len(total_data)
+        return b''.join(total_data)
     
-    def full_recv(self) -> bytes:
-        pass
-
 # Tworzyć połączenie z danym peerem
 # W __pełni__ wysyłać i odbierać wiadomości o danej długości (np message_length otrzymany w recv lub długość naszej wiadomości przy send)
 # Posiadać metody które zwrócą całą wiadomość od peera lub true jak wyślą w pełni wiadomość do peera
@@ -77,7 +87,7 @@ class BufferMessageIterator:
                         logging.debug(f'Buffor size is len {buffer_size} and the message is len {message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH}, Getting the rest of the data from socket')
                         # Get the rest of missing data to buffer
                         bytes_to_download = message_length - peer_message_len + BufferMessageIterator.BUFFER_HEADER_LENGTH
-                        self._buffer += self._socket.recv(bytes_to_download)
+                        self._buffer += self._socket.full_recv(bytes_to_download)
                         logging.debug(f'Buffer size after downloading data {len(self._buffer)}')
                         assert len(self._buffer) == message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH
                         peer_message += self._buffer[:message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH]

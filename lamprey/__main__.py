@@ -7,9 +7,10 @@ from datetime import datetime
 import bencoding
 import bitstring
 from lamprey.dataclass import Torrent, KeepAlive, Choke, Unchoke, Interested, Not_Interested, Have, Bitfield, Request, Piece, Cancel, Port
-from lamprey.protocol import handshake, BufferMessageIterator
+from lamprey.protocol import handshake, BufferMessageIterator, PeerSocket
 from lamprey.tracker import Tracker
 import math
+
 
 from lamprey.common import format_bytes, check_user_disk_space
 
@@ -168,7 +169,7 @@ for peer in peers_list:
         recieved_bitfield = None
         state = set()
 
-        s = socket.create_connection((peer, port), timeout=10)
+        s = PeerSocket.create_connection((peer, port), timeout=10).socket
 
         # Initiate connection with peer
         for i in range(5):
