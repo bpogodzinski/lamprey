@@ -1,3 +1,5 @@
+import bitstring
+
 class Block:
     def __init__(self, size = 2**14, content = None, piece = None, is_completed = False, is_downloading = False):
         self.size = size
@@ -29,13 +31,14 @@ class Piece:
         return ' '.join(str(block) for block in self.block_list)
 
 
+#Singleton ?
 class FileManager:
     def __init__(self, torrent):
-        self.bitfield = create_bitfield()
-        self.peer_bitfield
-
-        bitfield_lem = ''
-        pass
+        self.bitfield = self.create_bitfield(torrent)
+        self.peer_bitfield = None
+    
+    def create_bitfield(self, torrent):
+        return bitstring.BitArray(auto=[False for _ in range(torrent.get_number_of_pieces())])
 
 # obiekt_piece = Piece(262144, index=0)
 # obiekt_piece1 = Piece(262144, index=1)

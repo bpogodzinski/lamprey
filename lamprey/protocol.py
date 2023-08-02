@@ -4,13 +4,52 @@ import socket
 from .tracker import Tracker
 from .dataclass import ID_to_msg_class, Have, Piece, Request, Cancel, Choke, KeepAlive, Bitfield, Interested
 
-def handshake(s: socket.socket, tracker: Tracker) -> bool:
+# https://docs.python.org/3/howto/sockets.html
+# https://code.activestatARG UDA_DIRe.com/recipes/408859-socketrecv-three-ways-to-turn-it-into-recvall/
+
+# Tworzyć połączenie z danym peerem
+# W __pełni__ wysyłać i odbierać wiadomości o danej długości (np message_length otrzymany w recv lub długość naszej wiadomości przy send)
+# Posiadać metody które zwrócą całą wiadomość od peera lub true jak wyślą w pełni wiadomość do peera
+# W pełni otrzymane wiadomości będziemy pakować do self._buffer w BufferMessageIterator
+
+class PeerSocket():
+    def __init__(self, peer_socket: socket.socket):
+        self.socket = peer_socket
+
+    def create_connection(address, timeout=10,
+                      source_address=None, *, all_errors=False):
+        return PeerSocket(socket.create_connection(address, timeout))
+
+    def recv(self, bytes_to_download):
+        return self.socket.recv(bytes_to_download)
+    
+    def getpeername(self):
+        return self.socket.getpeername()
+
+    def gettimeout(self):
+        return self.socket.gettimeout()
+
+    def sendall(self, message):
+        return self.socket.sendall(message)
+
+    def recvall(self, msglen = 0) -> bytes:
+        total_data = []
+        bytes_recd = 0
+        while bytes_recd < msglen:
+            chunk = self.recv(min(msglen - bytes_recd, 2048))
+            if chunk == b'':
+                raise RuntimeError("socket connection broken")
+            total_data.append(chunk)
+            bytes_recd = bytes_recd + len(chunk)
+        return b''.join(total_data)
+
+def handshake(s: PeerSocket, tracker: Tracker) -> bool:
     handshake_format = '!B19s8x20s20s'
     logging.debug(f'Handshake attempt to {s.getpeername()}')
     message = struct.pack(handshake_format, 19, 'BitTorrent protocol'.encode('utf-8'),
                           tracker.info_hash, tracker.peer_id.encode('utf-8'))
     s.sendall(message)
-    handshake_data = s.recv(68)
+    handshake_data = s.recvall(68)
     if len(handshake_data) < 68:
         logging.debug(f'Handshake attempt to {s.getpeername()} failed: Invalid handshake response')
         return False
@@ -23,36 +62,10 @@ def handshake(s: socket.socket, tracker: Tracker) -> bool:
     return True
 
 
-# https://docs.python.org/3/howto/sockets.html
-# https://code.activestatARG UDA_DIRe.com/recipes/408859-socketrecv-three-ways-to-turn-it-into-recvall/
-class PeerSocket():
-    def __init__(self, peer_socket):
-        self.socket = peer_socket
-
-    def create_connection(address, timeout=10,
-                      source_address=None, *, all_errors=False):
-        return PeerSocket(socket.create_connection(address, timeout))
-
-
-    def full_recv(self, total_data = None, n = 0) -> bytes:
-        total_data = []
-        bytes_recd = 0
-        while bytes_recd < n:
-            total_data = self.PeerSocket.recv(min(n - bytes_recd, 2048))
-            if total_data == b'':
-                raise RuntimeError("socket connection broken")
-            total_data.append(total_data)
-            bytes_recd = bytes_recd + len(total_data)
-        return b''.join(total_data)
-    
-# Tworzyć połączenie z danym peerem
-# W __pełni__ wysyłać i odbierać wiadomości o danej długości (np message_length otrzymany w recv lub długość naszej wiadomości przy send)
-# Posiadać metody które zwrócą całą wiadomość od peera lub true jak wyślą w pełni wiadomość do peera
-# W pełni otrzymane wiadomości będziemy pakować do self._buffer w BufferMessageIterator
 
 class BufferMessageIterator:
     BUFFER_HEADER_LENGTH = 4
-    def __init__(self, main_socket: socket.socket):
+    def __init__(self, main_socket: PeerSocket):
         self._socket = main_socket
         self._buffer = b''
 
@@ -87,10 +100,10 @@ class BufferMessageIterator:
                         logging.debug(f'Buffor size is len {buffer_size} and the message is len {message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH}, Getting the rest of the data from socket')
                         # Get the rest of missing data to buffer
                         bytes_to_download = message_length - peer_message_len + BufferMessageIterator.BUFFER_HEADER_LENGTH
-                        self._buffer += self._socket.full_recv(bytes_to_download)
+                        self._buffer += self._socket.recvall(msglen=bytes_to_download)
                         logging.debug(f'Buffer size after downloading data {len(self._buffer)}')
                         assert len(self._buffer) == message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH
-                        peer_message += self._buffer[:message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH]
+                        peer_message = self._buffer[:message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH]
                     
                     # Delete last message from buffer
                     self._buffer = self._buffer[message_length + BufferMessageIterator.BUFFER_HEADER_LENGTH:]

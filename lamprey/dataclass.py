@@ -1,3 +1,4 @@
+from math import ceil
 import struct
 import bitstring
 
@@ -44,6 +45,9 @@ class Torrent():
 
     def get_announce_list(self):
         return self.announce_list
+    
+    def get_number_of_pieces(self):
+        return ceil(self.get_length() / self.get_piece_length())
     
     def get_pieces_SHA1_list(self) -> list:
         pieces = self.info[b'pieces']

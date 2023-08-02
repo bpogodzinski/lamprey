@@ -9,6 +9,7 @@ import bitstring
 from lamprey.dataclass import Torrent, KeepAlive, Choke, Unchoke, Interested, Not_Interested, Have, Bitfield, Request, Piece, Cancel, Port
 from lamprey.protocol import handshake, BufferMessageIterator, PeerSocket
 from lamprey.tracker import Tracker
+from lamprey.piece_manager import FileManager
 import math
 
 
@@ -99,7 +100,6 @@ torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetim
     torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']), (torrent[b'announce']), (torrent[b'announce-list']))
 logging.debug(f'Length {torrent_info.get_length()}')
 logging.debug(f'Piece length {torrent_info.get_piece_length()}')
-
 number_of_pieces = torrent_info.get_length() / torrent_info.get_piece_length()
 logging.debug(f'Number of pieces is {math.ceil(number_of_pieces)}')
 
@@ -162,6 +162,7 @@ logging.info(f'Possible peers ({len(peers_list)}): {peers_list}')
 
 for peer in peers_list:
     try:
+        fm = FileManager(torrent_info)
         list_peer = peer.split(':')
         peer = list_peer[0]
         port = int(list_peer[1])
@@ -169,7 +170,7 @@ for peer in peers_list:
         recieved_bitfield = None
         state = set()
 
-        s = PeerSocket.create_connection((peer, port), timeout=10).socket
+        s = PeerSocket.create_connection((peer, port), timeout=10)
 
         # Initiate connection with peer
         for i in range(5):
@@ -225,14 +226,14 @@ for peer in peers_list:
 
             elif isinstance(message, Bitfield):
                 logging.debug(f'Recevied Bitfield message from {s.getpeername()}')
-                recieved_bitfield = message.bitfield
+                fm.bitfield = message.bitfield
 
             elif isinstance(message, Request):
                 logging.debug(f'Recevied Request message from {s.getpeername()}')
                 # nie robimy nic bo nie seedujemy
 
             elif isinstance(message, Piece):
-                logging.debug(f'Recevied Piece message from {s.getpeername()} {message}')
+                logging.debug(f'Recevied Piece message from {s.getpeername()}')
                 # peer wysłał nam kawałek pliku, zapisz go
 
             elif isinstance(message, Cancel):
