@@ -141,6 +141,9 @@ logging.debug(f'Last block of last piece got {math.ceil(last_block_of_last_piece
 logging.debug(f'Piece List {torrent_info.get_pieces_SHA1_list()[4394]}')
 logging.debug(f'1st piece {torrent_info.get_pieces_SHA1_list()[0]}')
 
+file_manager = FileManager(torrent_info)
+
+
 tracker = Tracker(torrent_info)
 tracker_response = tracker.connect()
 peers_list = []
@@ -168,7 +171,6 @@ for peer in peers_list:
         port = int(list_peer[1])
         keep_alive_counter=0
         recieved_bitfield = None
-        state = set()
 
         s = PeerSocket.create_connection((peer, port), timeout=10)
 
@@ -182,11 +184,6 @@ for peer in peers_list:
             logging.debug(f'5 Handshake attempts were failed, skipping peer')
             continue
 
-        state.add(Choke)
-
-
-        import time
-        temp_flag = 1
         pieces_list = None
         # Get the peer responce and decode
         # the length and the type of the message
@@ -205,10 +202,9 @@ for peer in peers_list:
             elif isinstance(message, Unchoke):
                 # Can request pieces from peer
                 logging.debug(f'Recevied Unchoke message from {s.getpeername()}')
-                state.add(Unchoke)
-                if Choke in state:
-                    logging.debug(f'{s.getpeername()} stopped choking')
-                    state.remove(Choke)
+                # Request first available piece
+                file_manager.request_piece()
+
                 
             elif isinstance(message, Interested):
                 logging.debug(f'Recevied Interested message from {s.getpeername()}')
@@ -220,13 +216,16 @@ for peer in peers_list:
 
             elif isinstance(message, Have):
                 logging.debug(f'Recevied Have message from {s.getpeername()}')
-                # peer mówi że ma ten kawałek pliku
-                # zaaktualizować bitfield
-                # recieved_bitfield[piece_index] = 1
+                file_manager.process_have_message(message.piece_index)
 
             elif isinstance(message, Bitfield):
                 logging.debug(f'Recevied Bitfield message from {s.getpeername()}')
-                fm.bitfield = message.bitfield
+                file_manager.save_peer_bitfield(message.bitfield)
+                s.sendall(Interested().encode())
+                logging.debug(f'Sent Interested message to {s.getpeername()}')
+                s.sendall(Choke().encode())
+                logging.debug(f'Sent Choke message to {s.getpeername()}')
+                
 
             elif isinstance(message, Request):
                 logging.debug(f'Recevied Request message from {s.getpeername()}')
@@ -234,7 +233,10 @@ for peer in peers_list:
 
             elif isinstance(message, Piece):
                 logging.debug(f'Recevied Piece message from {s.getpeername()}')
-                # peer wysłał nam kawałek pliku, zapisz go
+                # peer wysłał nam kawałek pliku (block!!!), zapisz go do file managera
+                # poproś o kolejny kawałek
+                file_manager.save_piece(message)
+                file_manager.request_piece()
 
             elif isinstance(message, Cancel):
                 logging.debug(f'Recevied Cancel message from {s.getpeername()}')
@@ -250,20 +252,12 @@ for peer in peers_list:
 
 
             # Timestep debug
-            if temp_flag == 1:
-                temp_flag = 3
-                s.sendall(Interested().encode())
-                logging.debug(f'Sent Interested message to {s.getpeername()}')
-                s.sendall(Choke().encode())
-                logging.debug(f'Sent Choke message to {s.getpeername()}')
+          
                 
             elif temp_flag == 3:
                 temp_flag = 5
                 # Send first piece request
                 pieces_list = torrent_info.get_pieces_SHA1_list()[0]
-                REQUEST_SIZE = 2**14
-                index = 0
-                s.sendall(Request(index, 0, REQUEST_SIZE).encode())
                 logging.debug(f'Sent Request message to {s.getpeername()}')
 
     except ConnectionRefusedError as e:

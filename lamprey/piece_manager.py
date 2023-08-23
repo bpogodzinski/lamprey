@@ -1,4 +1,5 @@
 import bitstring
+from dataclass import Torrent
 
 class Block:
     def __init__(self, size = 2**14, content = None, piece = None, is_completed = False, is_downloading = False):
@@ -33,12 +34,32 @@ class Piece:
 
 #Singleton ?
 class FileManager:
-    def __init__(self, torrent):
-        self.bitfield = self.create_bitfield(torrent)
+    def __init__(self, torrent: Torrent):
+        self.torrent = torrent
+        self.bitfield = self.create_bitfield()
         self.peer_bitfield = None
     
-    def create_bitfield(self, torrent):
-        return bitstring.BitArray(auto=[False for _ in range(torrent.get_number_of_pieces())])
+    def create_bitfield(self):
+        return bitstring.BitArray(auto=[False for _ in range(self.torrent.get_number_of_pieces())])
+
+    def save_peer_bitfield(self, bitfield):
+        self.peer_bitfield = bitfield
+
+    def request_piece(self, ...):
+        # Find first available piece to download
+        # send request to peer
+        raise NotImplementedError
+        REQUEST_SIZE = 2**14
+        index = 0
+        s.sendall(Request(index, 0, REQUEST_SIZE).encode())
+
+    def process_have_message(self, ...):
+        # Process have message, fill 1 in place of 0
+        # in bitfield
+        raise NotImplementedError
+    
+    def save_piece(self, file_data):
+        pass
 
 # obiekt_piece = Piece(262144, index=0)
 # obiekt_piece1 = Piece(262144, index=1)
