@@ -1,5 +1,7 @@
 import bitstring
-from dataclass import Torrent
+import logging
+from lamprey.dataclass import Torrent, ID_to_msg_class, Request
+from lamprey.protocol import PeerSocket
 
 class Block:
     def __init__(self, size = 2**14, content = None, piece = None, is_completed = False, is_downloading = False):
@@ -34,6 +36,11 @@ class Piece:
 
 #Singleton ?
 class FileManager:
+    
+    REQUEST_SIZE = 2**14
+    miejsce_do_bloków = []
+    
+
     def __init__(self, torrent: Torrent):
         self.torrent = torrent
         self.bitfield = self.create_bitfield()
@@ -45,21 +52,24 @@ class FileManager:
     def save_peer_bitfield(self, bitfield):
         self.peer_bitfield = bitfield
 
-    def request_piece(self, ...):
-        # Find first available piece to download
+    def request_piece(self, peer_socket, index = 0, begin = 0):
+        # Find block to download
         # send request to peer
-        raise NotImplementedError
-        REQUEST_SIZE = 2**14
-        index = 0
-        s.sendall(Request(index, 0, REQUEST_SIZE).encode())
+        logging.debug(f'Sending request to {peer_socket.getpeername()}, index: {index}, begin:{begin}, length:{FileManager.REQUEST_SIZE}')
+        peer_socket.sendall(Request(index, begin, FileManager.REQUEST_SIZE).encode())
 
-    def process_have_message(self, ...):
+    def process_have_message(self):
         # Process have message, fill 1 in place of 0
         # in bitfield
-        raise NotImplementedError
+        pass
     
     def save_piece(self, file_data):
+        FileManager.miejsce_do_bloków.append(file_data)
+        
+
         pass
+# pobrać bloki jedengo piece następnie zapisać, i zweryfikować jego HASH 
+
 
 # obiekt_piece = Piece(262144, index=0)
 # obiekt_piece1 = Piece(262144, index=1)

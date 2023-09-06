@@ -2,6 +2,8 @@ from math import ceil
 import struct
 import bitstring
 
+#  wrzucić wszystkie działania na pliku ( dzielenie pieców na bloki)
+
 class Torrent():
     def __init__(self, comment, created_by, creation_date,
                  url_list, info, name, length, piece_length, announce, announce_list):

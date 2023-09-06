@@ -168,6 +168,8 @@ for peer in peers_list:
         fm = FileManager(torrent_info)
         list_peer = peer.split(':')
         peer = list_peer[0]
+        if peer != "37.48.74.20":
+            continue
         port = int(list_peer[1])
         keep_alive_counter=0
         recieved_bitfield = None
@@ -203,7 +205,6 @@ for peer in peers_list:
                 # Can request pieces from peer
                 logging.debug(f'Recevied Unchoke message from {s.getpeername()}')
                 # Request first available piece
-                file_manager.request_piece()
 
                 
             elif isinstance(message, Interested):
@@ -225,7 +226,7 @@ for peer in peers_list:
                 logging.debug(f'Sent Interested message to {s.getpeername()}')
                 s.sendall(Choke().encode())
                 logging.debug(f'Sent Choke message to {s.getpeername()}')
-                
+                file_manager.request_piece(s,0)
 
             elif isinstance(message, Request):
                 logging.debug(f'Recevied Request message from {s.getpeername()}')
@@ -236,7 +237,7 @@ for peer in peers_list:
                 # peer wysłał nam kawałek pliku (block!!!), zapisz go do file managera
                 # poproś o kolejny kawałek
                 file_manager.save_piece(message)
-                file_manager.request_piece()
+                file_manager.request_piece(s, message.index + 1)
 
             elif isinstance(message, Cancel):
                 logging.debug(f'Recevied Cancel message from {s.getpeername()}')
