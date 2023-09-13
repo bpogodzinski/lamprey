@@ -100,44 +100,12 @@ torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetim
     torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']), (torrent[b'announce']), (torrent[b'announce-list']))
 logging.debug(f'Length {torrent_info.get_length()}')
 logging.debug(f'Piece length {torrent_info.get_piece_length()}')
-number_of_pieces = torrent_info.get_length() / torrent_info.get_piece_length()
-logging.debug(f'Number of pieces is {math.ceil(number_of_pieces)}')
-
-def pieces_length():
-    p_left_overs = number_of_pieces % 1
-    p_rest = p_left_overs * torrent_info.get_piece_length()
-    if p_rest == 0:
-        return torrent_info.get_piece_length()
-    else:
-        return p_rest
-
-logging.debug(f'Last pieces have {pieces_length()} bytes')
-
-block_size = 2**14
-number_of_blocks = torrent_info.get_piece_length() / block_size
-logging.debug(f'Number of block in pieces is {math.ceil(number_of_blocks)}')
-
-def blocks_length():
-    b_left_overs = number_of_blocks % 1
-    b_rest = b_left_overs * block_size
-    if b_rest == 0:
-        return block_size
-    else:
-        return b_rest
-logging.debug(f'Last block of piece have {blocks_length()} bytes')
-
-
-num_block_of_last_piece = pieces_length() / block_size
-logging.debug(f'Block number of last piece is {math.ceil(num_block_of_last_piece)} ')
-
-def last_block_of_last_piece():
-    l_b_left_overs = num_block_of_last_piece % 1
-    l_b_rest = l_b_left_overs * block_size
-    if l_b_rest == 0:
-        return block_size
-    else:
-        return l_b_rest
-logging.debug(f'Last block of last piece got {math.ceil(last_block_of_last_piece())} bytes ')
+logging.debug(f'Number of pieces is {math.ceil(torrent_info.number_of_pieces())}')
+logging.debug(f'Last pieces have {torrent_info.last_piece_length()} bytes')
+logging.debug(f'Number of block in pieces is {math.ceil(torrent_info.number_of_block())}')
+logging.debug(f'Last block of piece have {torrent_info.blocks_length()} bytes')
+logging.debug(f'Block number of last piece is {math.ceil(torrent_info.num_block_of_last_piece())} ')
+logging.debug(f'Last block of last piece got {math.ceil(torrent_info.last_block_of_last_piece())} bytes ')
 logging.debug(f'Piece List {torrent_info.get_pieces_SHA1_list()[4394]}')
 logging.debug(f'1st piece {torrent_info.get_pieces_SHA1_list()[0]}')
 
