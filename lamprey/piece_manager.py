@@ -36,10 +36,9 @@ class Piece:
 
 #Singleton ?
 class FileManager:
-    
     REQUEST_SIZE = 2**14
     miejsce_do_bloków = []
-    
+    our_bitfield = []
 
     def __init__(self, torrent: Torrent):
         self.torrent = torrent
@@ -47,7 +46,10 @@ class FileManager:
         self.peer_bitfield = None
     
     def create_bitfield(self):
-        return bitstring.BitArray(auto=[False for _ in range(self.torrent.get_number_of_pieces())])
+        for piece_index in range(self.torrent.get_number_of_pieces()):
+            blocks = []
+            piece = Piece(self.torrent.get_piece_length(), index=piece_index)
+            return FileManager.our_bitfield.append(FileManager.miejsce_do_bloków)
 
     def save_peer_bitfield(self, bitfield):
         self.peer_bitfield = bitfield

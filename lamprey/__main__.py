@@ -100,7 +100,7 @@ torrent_info = Torrent((torrent[b"comment"]), (torrent[b"created by"]), (datetim
     torrent[b"url-list"]), (torrent[b"info"]), (torrent[b'info'][b'name']), (torrent[b'info'][b'length']), (torrent[b'info'][b'piece length']), (torrent[b'announce']), (torrent[b'announce-list']))
 logging.debug(f'Length {torrent_info.get_length()}')
 logging.debug(f'Piece length {torrent_info.get_piece_length()}')
-logging.debug(f'Number of pieces is {math.ceil(torrent_info.number_of_pieces())}')
+logging.debug(f'Number of pieces is {math.ceil(torrent_info.get_number_of_pieces())}')
 logging.debug(f'Last pieces have {torrent_info.last_piece_length()} bytes')
 logging.debug(f'Number of block in pieces is {math.ceil(torrent_info.number_of_block())}')
 logging.debug(f'Last block of piece have {torrent_info.blocks_length()} bytes')

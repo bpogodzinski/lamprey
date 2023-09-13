@@ -63,9 +63,6 @@ class Torrent():
             else:
                 byte_array.append(pieces)
         return byte_array
-    
-    def number_of_pieces(self):
-        return self.length / self.piece_length
 
 
     def last_piece_length(self):
