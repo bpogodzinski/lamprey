@@ -76,8 +76,8 @@ class Torrent():
             return p_rest
 
 
-    def number_of_block(self):
-        return self.piece_length / Torrent.block_size
+    def number_of_blocks(self):
+        return ceil(self.piece_length / Torrent.block_size)
 
     def blocks_length(self):
         number_of_blocks = self.piece_length / Torrent.block_size
@@ -89,7 +89,7 @@ class Torrent():
             return b_rest
         
     def num_block_of_last_piece(self):
-        return self.last_piece_length() / Torrent.block_size
+        return ceil(self.last_piece_length() / Torrent.block_size)
 
     def last_block_of_last_piece(self):
         num_block_of_last_piece = self.last_piece_length() / Torrent.block_size

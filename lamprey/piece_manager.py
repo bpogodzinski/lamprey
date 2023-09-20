@@ -4,31 +4,28 @@ from lamprey.dataclass import Torrent, ID_to_msg_class, Request
 from lamprey.protocol import PeerSocket
 
 class Block:
-    def __init__(self, size = 2**14, content = None, piece = None, is_completed = False, is_downloading = False):
+    def __init__(self, size = 2**14, index=None, content = None, owning_piece = None, is_completed = False, is_downloading = False):
         self.size = size
+        self.index = index
         self.content = content
-        self.piece = piece
+        self.owning_piece = owning_piece
         self.is_completed = is_completed
         self.is_downloading = is_downloading
 
+        self.file_begin = #to ma sie cały czas zwiększać       
+        self.file_end = # ostatni blok to 1151975424, ostatni blok w pierwszym piece bedzie 262144
 
-
-        self.file_begin = None
-        
-        self.file_end = None
-
-        self.expected_shasum = None
-    
     def __str__(self) -> str:
         return f'size: {self.size} piece: {self.piece.index}'
 
 class Piece:
-    def __init__(self, length, block_list = None, index = None, is_completed = False, is_downloading = False):
+    def __init__(self, length, block_list = None, index = None, is_completed = False, is_downloading = False, expected_shasum = None):
         self.length = length
         self.block_list = block_list if block_list else []
         self.index = index
         self.is_completed = is_completed
         self.is_downloading = is_downloading
+        self.expected_shasum = expected_shasum
 
     def __str__(self) -> str:
         return ' '.join(str(block) for block in self.block_list)
@@ -38,19 +35,28 @@ class Piece:
 class FileManager:
     REQUEST_SIZE = 2**14
     miejsce_do_bloków = []
-    our_bitfield = []
-
+    
     def __init__(self, torrent: Torrent):
         self.torrent = torrent
         self.bitfield = self.create_bitfield()
         self.peer_bitfield = None
     
     def create_bitfield(self):
+        bitfield = []
         for piece_index in range(self.torrent.get_number_of_pieces()):
-            blocks = []
             piece = Piece(self.torrent.get_piece_length(), index=piece_index)
-            return FileManager.our_bitfield.append(FileManager.miejsce_do_bloków)
+            blocks = []
+            num_of_blocks_to_add = self.torrent.number_of_blocks()
+            if piece_index == self.torrent.get_number_of_pieces() - 1:
+                num_of_blocks_to_add = self.torrent.num_block_of_last_piece()
+            
+            for block_index in range(num_of_blocks_to_add):
+                blocks.append(Block(index=block_index, owning_piece=piece))
+            piece.block_list = blocks
+            bitfield.append(piece)
 
+        return bitfield
+    
     def save_peer_bitfield(self, bitfield):
         self.peer_bitfield = bitfield
 
