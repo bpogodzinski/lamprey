@@ -111,7 +111,6 @@ logging.debug(f'1st piece {torrent_info.get_pieces_SHA1_list()[0]}')
 
 file_manager = FileManager(torrent_info)
 
-
 tracker = Tracker(torrent_info)
 tracker_response = tracker.connect()
 peers_list = []

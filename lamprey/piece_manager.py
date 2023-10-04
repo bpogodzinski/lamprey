@@ -4,7 +4,7 @@ from lamprey.dataclass import Torrent, ID_to_msg_class, Request
 from lamprey.protocol import PeerSocket
 
 class Block:
-    def __init__(self, size = 2**14, index=None, content = None, owning_piece = None, is_completed = False, is_downloading = False):
+    def __init__(self, size = 2**14, index=None, content = None, owning_piece = None, is_completed = False, is_downloading = False, file_begin = None, file_end = None):
         self.size = size
         self.index = index
         self.content = content
@@ -12,11 +12,12 @@ class Block:
         self.is_completed = is_completed
         self.is_downloading = is_downloading
 
-        self.file_begin = #to ma sie cały czas zwiększać       
-        self.file_end = # ostatni blok to 1151975424, ostatni blok w pierwszym piece bedzie 262144
-
+        self.file_begin = file_begin #to ma sie cały czas zwiększać       
+        self.file_end = file_end  # ostatni blok to 1151975424, ostatni blok w pierwszym piece bedzie 262144
+    
     def __str__(self) -> str:
-        return f'size: {self.size} piece: {self.piece.index}'
+        return f'size: {self.size} piece: {self.owning_piece.index}'
+
 
 class Piece:
     def __init__(self, length, block_list = None, index = None, is_completed = False, is_downloading = False, expected_shasum = None):
@@ -26,6 +27,7 @@ class Piece:
         self.is_completed = is_completed
         self.is_downloading = is_downloading
         self.expected_shasum = expected_shasum
+
 
     def __str__(self) -> str:
         return ' '.join(str(block) for block in self.block_list)
@@ -51,12 +53,24 @@ class FileManager:
                 num_of_blocks_to_add = self.torrent.num_block_of_last_piece()
             
             for block_index in range(num_of_blocks_to_add):
-                blocks.append(Block(index=block_index, owning_piece=piece))
+                block_begin = self.file_begin_function(piece_index, block_index, FileManager.REQUEST_SIZE)
+                block_end = self.file_end_function(block_begin, FileManager.REQUEST_SIZE, piece_index)
+                blocks.append(Block(index=block_index, owning_piece=piece, file_begin = block_begin, file_end = block_end))
             piece.block_list = blocks
             bitfield.append(piece)
 
         return bitfield
     
+    def file_begin_function(self, piece_index, block_index, size):
+        return (piece_index + self.torrent.number_of_blocks) * size
+
+
+    def file_end_function(self, file_begin, size, piece_index):
+        if piece_index == self.torrent.get_number_of_pieces():
+            return self.torrent.last_block_of_last_piece()
+        else:
+            return file_begin + size - 1
+
     def save_peer_bitfield(self, bitfield):
         self.peer_bitfield = bitfield
 
