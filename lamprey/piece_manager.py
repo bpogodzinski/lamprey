@@ -62,7 +62,18 @@ class FileManager:
         return bitfield
     
     def file_begin_function(self, piece_index, block_index, size):
-        return (piece_index + self.torrent.number_of_blocks) * size
+        if piece_index == 0:
+            total_block_index = block_index
+        if piece_index == 1 and block_index == 0:
+            total_block_index = piece_index * self.torrent.number_of_blocks()
+            begin = total_block_index * FileManager.REQUEST_SIZE
+        else:
+            total_block_index = piece_index * self.torrent.number_of_blocks()
+            begin = (total_block_index + block_index) * FileManager.REQUEST_SIZE
+        
+        return begin      
+        
+        # return (piece_index + self.torrent.number_of_blocks) * size
 
 
     def file_end_function(self, file_begin, size, piece_index):

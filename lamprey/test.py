@@ -12,9 +12,12 @@ blocks_in_file = file / block_size                      #70311
 def file_begin(block_size, piece_index, block_index):
     if piece_index == 0:
         total_block_index = block_index
+    if piece_index == 1 and block_index == 0:
+        total_block_index = piece_index * ilosc_blokow
+        begin = total_block_index  * block_size
     else:
         total_block_index = piece_index * ilosc_blokow
-    begin = (total_block_index + block_index) * block_size
+        begin = (total_block_index + block_index)  * block_size
     end = begin + block_size - 1
     return begin
 
