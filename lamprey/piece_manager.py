@@ -4,7 +4,7 @@ from lamprey.dataclass import Torrent, ID_to_msg_class, Request
 from lamprey.protocol import PeerSocket
 
 class Block:
-    def __init__(self, size = 2**14, index=None, content = None, owning_piece = None, is_completed = False, is_downloading = False, file_begin = None, file_end = None):
+    def __init__(self, size = 2**14, index=None, content = None, owning_piece = None, is_completed = False, is_downloading = False, begin = None, end = None):
         self.size = size
         self.index = index
         self.content = content
@@ -12,8 +12,8 @@ class Block:
         self.is_completed = is_completed
         self.is_downloading = is_downloading
 
-        self.file_begin = file_begin #to ma sie cały czas zwiększać       
-        self.file_end = file_end  # ostatni blok to 1151975424, ostatni blok w pierwszym piece bedzie 262144
+        self.begin = begin #to ma sie cały czas zwiększać       
+        self.end = end  # ostatni blok to 1151975424, ostatni blok w pierwszym piece bedzie 262144
     
     def __str__(self) -> str:
         return f'size: {self.size} piece: {self.owning_piece.index}'
@@ -36,7 +36,6 @@ class Piece:
 #Singleton ?
 class FileManager:
     REQUEST_SIZE = 2**14
-    miejsce_do_bloków = []
     
     def __init__(self, torrent: Torrent):
         self.torrent = torrent
@@ -54,8 +53,8 @@ class FileManager:
             
             for block_index in range(num_of_blocks_to_add):
                 block_begin = self.file_begin_function(piece_index, block_index, FileManager.REQUEST_SIZE)
-                block_end = self.file_end_function(block_begin, FileManager.REQUEST_SIZE, piece_index)
-                blocks.append(Block(index=block_index, owning_piece=piece, file_begin = block_begin, file_end = block_end))
+                block_end = self.file_end_function(block_begin, FileManager.REQUEST_SIZE, piece_index, block_index)
+                blocks.append(Block(index=block_index, owning_piece=piece, begin = block_begin, end = block_end))
             piece.block_list = blocks
             bitfield.append(piece)
 
@@ -77,10 +76,10 @@ class FileManager:
         
         # return (piece_index + self.torrent.number_of_blocks) * size
 
-
-    def file_end_function(self, file_begin, size, piece_index):
-        if piece_index == self.torrent.get_number_of_pieces():
-            return self.torrent.last_block_of_last_piece()
+    def file_end_function(self, file_begin, size, piece_index, block_index):
+        if (piece_index == self.torrent.get_number_of_pieces() - 1) \
+            and (block_index == self.torrent.num_block_of_last_piece() - 1) :
+            return self.torrent.get_length()
         else:
             return file_begin + size - 1
 
