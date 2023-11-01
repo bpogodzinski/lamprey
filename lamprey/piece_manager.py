@@ -67,6 +67,8 @@ class FileManager:
         if piece_index == 1 and block_index == 0:
             total_block_index = piece_index * self.torrent.number_of_blocks()
             begin = total_block_index * FileManager.REQUEST_SIZE
+        if piece_index == self.torrent.get_number_of_pieces() and block_index == self.torrent.num_block_of_last_piece():
+            begin = self.torrent.last_block_of_last_piece()
         else:
             total_block_index = piece_index * self.torrent.number_of_blocks()
             begin = (total_block_index + block_index) * FileManager.REQUEST_SIZE
