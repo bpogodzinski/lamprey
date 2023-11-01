@@ -12,6 +12,8 @@ from lamprey.tracker import Tracker
 from lamprey.piece_manager import FileManager
 import math
 
+def check_piece(piece):
+    xd = piece
 
 from lamprey.common import format_bytes, check_user_disk_space
 
@@ -152,7 +154,10 @@ for peer in peers_list:
         if not success:
             logging.debug(f'5 Handshake attempts were failed, skipping peer')
             continue
-
+        
+        job_queue = [ block for block in file_manager.bitfield[0].block_list ]
+        job_queue.reverse()
+        file = []
         pieces_list = None
         # Get the peer responce and decode
         # the length and the type of the message
@@ -193,7 +198,15 @@ for peer in peers_list:
                 logging.debug(f'Sent Interested message to {s.getpeername()}')
                 s.sendall(Choke().encode())
                 logging.debug(f'Sent Choke message to {s.getpeername()}')
-                file_manager.request_piece(s,0)
+                # for block in file_manager.bitfield[0].block_list:
+                #     file_manager.request_piece(s, block.index, block.begin, block.size)
+                #     logging.debug(f'Sending request index: {block.index} begin:{block.begin} length:{block.size}')
+                # file_manager.request_piece(s, file_manager.bitfield[-1].block_list[-2].index, file_manager.bitfield[-1].block_list[-2].begin, file_manager.bitfield[-1].block_list[-2].size)
+                # logging.debug(f'Sending request index: {file_manager.bitfield[-1].block_list[-2].index} begin:{file_manager.bitfield[-1].block_list[-2].begin} length:{file_manager.bitfield[-1].block_list[-2].size}')
+                
+                block2download = job_queue.pop()
+                file_manager.request_piece(s, index=block2download.piece_index, begin=block2download.begin, length=2**14)
+
 
             elif isinstance(message, Request):
                 logging.debug(f'Recevied Request message from {s.getpeername()}')
@@ -203,8 +216,12 @@ for peer in peers_list:
                 logging.debug(f'Recevied Piece message from {s.getpeername()}')
                 # peer wysłał nam kawałek pliku (block!!!), zapisz go do file managera
                 # poproś o kolejny kawałek
-                file_manager.save_piece(message)
-                file_manager.request_piece(s, message.index + 1)
+                file.append(message)
+                
+                if len(job_queue) == 0: check_piece(file)
+                
+                block2download = job_queue.pop()
+                file_manager.request_piece(s, index=block2download.piece_index, begin=block2download.begin, length=2**14)
 
             elif isinstance(message, Cancel):
                 logging.debug(f'Recevied Cancel message from {s.getpeername()}')
@@ -235,3 +252,4 @@ for peer in peers_list:
         logging.debug(f'Connection to {peer}:{port}: {e}')
     except OSError as e:
         logging.debug(f'Connection to {peer}:{port}: {e}')
+
