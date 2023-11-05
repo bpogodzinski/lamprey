@@ -155,8 +155,8 @@ for peer in peers_list:
             logging.debug(f'5 Handshake attempts were failed, skipping peer')
             continue
         
-        job_queue = [ block for block in file_manager.bitfield[0].block_list ]
-        job_queue.reverse()
+        file_manager.job_queue(file_manager.bitfield)
+        
         file = []
         pieces_list = None
         # Get the peer responce and decode
@@ -204,7 +204,8 @@ for peer in peers_list:
                 # file_manager.request_piece(s, file_manager.bitfield[-1].block_list[-2].index, file_manager.bitfield[-1].block_list[-2].begin, file_manager.bitfield[-1].block_list[-2].size)
                 # logging.debug(f'Sending request index: {file_manager.bitfield[-1].block_list[-2].index} begin:{file_manager.bitfield[-1].block_list[-2].begin} length:{file_manager.bitfield[-1].block_list[-2].size}')
                 
-                block2download = job_queue.pop()
+                block2download = file_manager.job_queue(file_manager.bitfield)
+                block2download.pop()
                 file_manager.request_piece(s, index=block2download.piece_index, begin=block2download.begin, length=2**14)
 
 
@@ -218,9 +219,10 @@ for peer in peers_list:
                 # poproś o kolejny kawałek
                 file.append(message)
                 
-                if len(job_queue) == 0: check_piece(file)
+                if len(file_manager.job_queue()) == 0: check_piece(file)
                 
-                block2download = job_queue.pop()
+                block2download = file_manager.job_queue()
+                block2download.pop()
                 file_manager.request_piece(s, index=block2download.piece_index, begin=block2download.begin, length=2**14)
 
             elif isinstance(message, Cancel):

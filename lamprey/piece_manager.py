@@ -100,7 +100,12 @@ class FileManager:
     #     FileManager.miejsce_do_bloków.append(file_data)
         
 
-        pass
+    def job_queue(self, bitfield):
+        job_queue = [ block for block in bitfield[0].block_list ]
+        job_queue.reverse()
+        return job_queue
+    
+    pass
 # pobrać bloki jedengo piece następnie zapisać, i zweryfikować jego HASH 
 
 
