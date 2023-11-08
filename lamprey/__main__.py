@@ -155,7 +155,7 @@ for peer in peers_list:
             logging.debug(f'5 Handshake attempts were failed, skipping peer')
             continue
         
-        file_manager.job_queue(file_manager.bitfield)
+        file_manager.job_queue()
         
         file = []
         pieces_list = None
@@ -204,9 +204,9 @@ for peer in peers_list:
                 # file_manager.request_piece(s, file_manager.bitfield[-1].block_list[-2].index, file_manager.bitfield[-1].block_list[-2].begin, file_manager.bitfield[-1].block_list[-2].size)
                 # logging.debug(f'Sending request index: {file_manager.bitfield[-1].block_list[-2].index} begin:{file_manager.bitfield[-1].block_list[-2].begin} length:{file_manager.bitfield[-1].block_list[-2].size}')
                 
-                block2download = file_manager.job_queue(file_manager.bitfield)
+                block2download = file_manager.job_queue()
                 block2download.pop()
-                file_manager.request_piece(s, index=block2download.piece_index, begin=block2download.begin, length=2**14)
+                file_manager.request_piece(s, index=block2download[0].piece_index, begin=block2download[0].begin, length=2**14)
 
 
             elif isinstance(message, Request):
@@ -223,7 +223,7 @@ for peer in peers_list:
                 
                 block2download = file_manager.job_queue()
                 block2download.pop()
-                file_manager.request_piece(s, index=block2download.piece_index, begin=block2download.begin, length=2**14)
+                file_manager.request_piece(s, index=block2download[0].piece_index, begin=block2download[0].begin, length=2**14)
 
             elif isinstance(message, Cancel):
                 logging.debug(f'Recevied Cancel message from {s.getpeername()}')
