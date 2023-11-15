@@ -102,7 +102,6 @@ class FileManager:
     def job_queue(self):
         if self.bitfield:
             job_queue = [block for block in self.bitfield[0].block_list]
-            job_queue.reverse()
             return job_queue
         else:
             return []

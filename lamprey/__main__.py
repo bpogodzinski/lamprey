@@ -1,4 +1,4 @@
-import socket
+from hashlib import sha1
 from pprint import pprint as pp
 import argparse
 import logging
@@ -161,6 +161,8 @@ for peer in peers_list:
         pieces_list = None
         # Get the peer responce and decode
         # the length and the type of the message
+        blocks2download = file_manager.job_queue()
+
         for message in BufferMessageIterator(s):
             if isinstance(message, KeepAlive):
                 keep_alive_counter += 1
@@ -204,9 +206,9 @@ for peer in peers_list:
                 # file_manager.request_piece(s, file_manager.bitfield[-1].block_list[-2].index, file_manager.bitfield[-1].block_list[-2].begin, file_manager.bitfield[-1].block_list[-2].size)
                 # logging.debug(f'Sending request index: {file_manager.bitfield[-1].block_list[-2].index} begin:{file_manager.bitfield[-1].block_list[-2].begin} length:{file_manager.bitfield[-1].block_list[-2].size}')
                 
-                block2download = file_manager.job_queue()
-                block2download.pop()
-                file_manager.request_piece(s, index=block2download[0].piece_index, begin=block2download[0].begin, length=2**14)
+
+                block = blocks2download.pop(0)
+                file_manager.request_piece(s, index=block.piece_index, begin=block.begin, length=2**14)
 
 
             elif isinstance(message, Request):
@@ -217,13 +219,17 @@ for peer in peers_list:
                 logging.debug(f'Recevied Piece message from {s.getpeername()}')
                 # peer wysłał nam kawałek pliku (block!!!), zapisz go do file managera
                 # poproś o kolejny kawałek
-                file.append(message)
+                file.append(message.block)
                 
-                if len(file_manager.job_queue()) == 0: check_piece(file)
-                
-                block2download = file_manager.job_queue()
-                block2download.pop()
-                file_manager.request_piece(s, index=block2download[0].piece_index, begin=block2download[0].begin, length=2**14)
+                if len(blocks2download) == 0:
+                    logging.debug(f"result: {sha1(b''.join(file)).digest()}")
+                    logging.debug(f'expect: {torrent_info.get_pieces_SHA1_list()[0]}')
+                    assert sha1(b''.join(file)).digest() == torrent_info.get_pieces_SHA1_list()[0]
+                    logging.debug(f'Piece sie zgadza')
+                    exit(0)
+
+                block = blocks2download.pop(0)
+                file_manager.request_piece(s, index=block.piece_index, begin=block.begin, length=2**14)
 
             elif isinstance(message, Cancel):
                 logging.debug(f'Recevied Cancel message from {s.getpeername()}')
