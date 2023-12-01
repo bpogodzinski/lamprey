@@ -10,8 +10,8 @@ class Block:
         self.content = content
         self.owning_piece = owning_piece
 
-        self.begin = begin #to ma sie cały czas zwiększać       
-        self.end = end  # ostatni blok to 1151975424, ostatni blok w pierwszym piece bedzie 262144
+        self.begin = begin
+        self.end = end
     
     def __str__(self) -> str:
         return f'size: {self.size} piece: {self.owning_piece.index}'
@@ -102,6 +102,8 @@ class FileManager:
     def job_queue(self):
         if self.bitfield:
             job_queue = [block for block in self.bitfield[0].block_list]
+            for block in job_queue:
+                block.piece_index=1
             return job_queue
         else:
             return []

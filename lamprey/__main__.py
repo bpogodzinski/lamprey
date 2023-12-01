@@ -12,9 +12,6 @@ from lamprey.tracker import Tracker
 from lamprey.piece_manager import FileManager
 import math
 
-def check_piece(piece):
-    xd = piece
-
 from lamprey.common import format_bytes, check_user_disk_space
 
 # TODO: Zapisuj stan połączenia
@@ -137,7 +134,7 @@ for peer in peers_list:
         fm = FileManager(torrent_info)
         list_peer = peer.split(':')
         peer = list_peer[0]
-        if peer != "37.48.74.20":
+        if peer not in ("37.48.74.20"):
             continue
         port = int(list_peer[1])
         keep_alive_counter=0
@@ -220,11 +217,17 @@ for peer in peers_list:
                 # peer wysłał nam kawałek pliku (block!!!), zapisz go do file managera
                 # poproś o kolejny kawałek
                 file.append(message.block)
+                # block begin i block end w piece są 0 - 262144 i zmienia się index o 1 
+                # index 0 : 0 - 262144
+                # index 1 : 0 - 262144
+                # a nie tak jak myśleliśmy czyli
+                # index 0 : 0 - 262144
+                # index 1 : 262144 - 524287
                 
                 if len(blocks2download) == 0:
                     logging.debug(f"result: {sha1(b''.join(file)).digest()}")
-                    logging.debug(f'expect: {torrent_info.get_pieces_SHA1_list()[0]}')
-                    assert sha1(b''.join(file)).digest() == torrent_info.get_pieces_SHA1_list()[0]
+                    logging.debug(f'expect: {torrent_info.get_pieces_SHA1_list()[1]}')
+                    assert sha1(b''.join(file)).digest() == torrent_info.get_pieces_SHA1_list()[1]
                     logging.debug(f'Piece sie zgadza')
                     exit(0)
 
@@ -241,17 +244,7 @@ for peer in peers_list:
             
             # elif message is None:
             #     logging.debug(f'No new messages from {s.getpeername()}')
-                
 
-
-            # Timestep debug
-          
-                
-            elif temp_flag == 3:
-                temp_flag = 5
-                # Send first piece request
-                pieces_list = torrent_info.get_pieces_SHA1_list()[0]
-                logging.debug(f'Sent Request message to {s.getpeername()}')
 
     except ConnectionRefusedError as e:
         logging.debug(f'Connection to {peer}:{port}: {e}')
