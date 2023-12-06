@@ -4,15 +4,14 @@ from lamprey.dataclass import Torrent, ID_to_msg_class, Request
 from lamprey.protocol import PeerSocket
 
 class Block:
-    def __init__(self, size = 2**14, content = None, owning_piece = None, begin = None, end = None):
+    def __init__(self, size = 2**14, content = None, owning_piece = None, begin = None):
         self.size = size
         self.piece_index = owning_piece.index
         self.content = content
         self.owning_piece = owning_piece
 
         self.begin = begin
-        self.end = end
-    
+
     def __str__(self) -> str:
         return f'size: {self.size} piece: {self.owning_piece.index}'
 
@@ -31,9 +30,7 @@ class Piece:
         return ' '.join(str(block) for block in self.block_list)
 
 
-#Singleton ?
 class FileManager:
-    REQUEST_SIZE = 2**14
     
     def __init__(self, torrent: Torrent):
         self.torrent = torrent
@@ -43,44 +40,20 @@ class FileManager:
     def create_bitfield(self):
         bitfield = []
         for piece_index in range(self.torrent.get_number_of_pieces()):
-            piece = Piece(self.torrent.get_piece_length(), index=piece_index)
+            piece = Piece(length=self.torrent.get_piece_length(), index=piece_index)
             blocks = []
             num_of_blocks_to_add = self.torrent.number_of_blocks()
             if piece_index == self.torrent.get_number_of_pieces() - 1:
                 num_of_blocks_to_add = self.torrent.num_block_of_last_piece()
             
             for block_index in range(num_of_blocks_to_add):
-                block_begin = self.file_begin_function(piece_index, block_index, FileManager.REQUEST_SIZE)
-                block_end = self.file_end_function(block_begin, FileManager.REQUEST_SIZE, piece_index, block_index)
-                blocks.append(Block(owning_piece=piece, begin = block_begin, end = block_end))
+                block_begin = block_index * Torrent.BLOCK_SIZE
+                blocks.append(Block(owning_piece=piece, begin = block_begin)) # 0 - piece_length
             piece.block_list = blocks
             bitfield.append(piece)
 
         return bitfield
     
-    def file_begin_function(self, piece_index, block_index, size):
-        if piece_index == 0:
-            total_block_index = block_index
-        if piece_index == 1 and block_index == 0:
-            total_block_index = piece_index * self.torrent.number_of_blocks()
-            begin = total_block_index * FileManager.REQUEST_SIZE
-        if piece_index == self.torrent.get_number_of_pieces() and block_index == self.torrent.num_block_of_last_piece():
-            begin = self.torrent.last_block_of_last_piece()
-        else:
-            total_block_index = piece_index * self.torrent.number_of_blocks()
-            begin = (total_block_index + block_index) * FileManager.REQUEST_SIZE
-        
-        return begin      
-        
-        # return (piece_index + self.torrent.number_of_blocks) * size
-
-    def file_end_function(self, file_begin, size, piece_index, block_index):
-        if (piece_index == self.torrent.get_number_of_pieces() - 1) \
-            and (block_index == self.torrent.num_block_of_last_piece() - 1) :
-            return self.torrent.get_length()
-        else:
-            return file_begin + size - 1
-
     def save_peer_bitfield(self, bitfield):
         self.peer_bitfield = bitfield
 
@@ -98,37 +71,11 @@ class FileManager:
     def save_piece(self, file_data):
         pass
     #     FileManager.miejsce_do_bloków.append(file_data)
-        
+
     def job_queue(self):
+        queue = []
         if self.bitfield:
-            job_queue = [block for block in self.bitfield[0].block_list]
-            for block in job_queue:
-                block.piece_index=1
-            return job_queue
-        else:
-            return []
-    # def job_queue(self, bitfield):
-    #     job_queue = [ block for block in bitfield[0].block_list ]
-    #     job_queue.reverse()
-    #     return job_queue
-    
-    pass
-# pobrać bloki jedengo piece następnie zapisać, i zweryfikować jego HASH 
-
-
-# obiekt_piece = Piece(262144, index=0)
-# obiekt_piece1 = Piece(262144, index=1)
-# obiekt_piece.block_list.append(Block(piece=obiekt_piece))
-# obiekt_piece.block_list.append(Block(piece=obiekt_piece))
-# obiekt_piece.block_list.append(Block(piece=obiekt_piece))
-# obiekt_piece1.block_list.append(Block(piece=obiekt_piece1))
-# obiekt_piece1.block_list.append(Block(piece=obiekt_piece1))
-# obiekt_piece1.block_list.append(Block(piece=obiekt_piece1))
-
-# print(str(obiekt_piece))
-# print(str(obiekt_piece1))
-
-# obiekt_piece.block_list[0]
-
-# 1. stwórz klase my socket która będzie high level interface do low-levelowych socketów, musimy pozbyć się problemu "niedoczytanych" danych
-# 2. stwórz nasz bitfield (wypełniony 0)
+            for piece in self.bitfield:
+                for block in piece.block_list:
+                    queue.append(block)
+        return queue

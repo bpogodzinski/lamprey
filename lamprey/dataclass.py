@@ -5,7 +5,7 @@ import bitstring
 #  wrzucić wszystkie działania na pliku ( dzielenie pieców na bloki)
 
 class Torrent():
-    block_size = 2**14
+    BLOCK_SIZE = 2**14
 
     def __init__(self, comment, created_by, creation_date,
                  url_list, info, name, length, piece_length, announce, announce_list):
@@ -77,26 +77,26 @@ class Torrent():
 
 
     def number_of_blocks(self):
-        return ceil(self.piece_length / Torrent.block_size)
+        return ceil(self.piece_length / Torrent.BLOCK_SIZE)
 
     def blocks_length(self):
-        number_of_blocks = self.piece_length / Torrent.block_size
+        number_of_blocks = self.piece_length / Torrent.BLOCK_SIZE
         b_left_overs = number_of_blocks % 1
-        b_rest = b_left_overs * Torrent.block_size
+        b_rest = b_left_overs * Torrent.BLOCK_SIZE
         if b_rest == 0:
-            return Torrent.block_size
+            return Torrent.BLOCK_SIZE
         else:
             return b_rest
         
     def num_block_of_last_piece(self):
-        return ceil(self.last_piece_length() / Torrent.block_size)
+        return ceil(self.last_piece_length() / Torrent.BLOCK_SIZE)
 
     def last_block_of_last_piece(self):
-        num_block_of_last_piece = self.last_piece_length() / Torrent.block_size
+        num_block_of_last_piece = self.last_piece_length() / Torrent.BLOCK_SIZE
         l_b_left_overs = num_block_of_last_piece % 1
-        l_b_rest = l_b_left_overs * Torrent.block_size
+        l_b_rest = l_b_left_overs * Torrent.BLOCK_SIZE
         if l_b_rest == 0:
-            return Torrent.block_size
+            return Torrent.BLOCK_SIZE
         else:
             return l_b_rest
         

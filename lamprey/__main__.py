@@ -217,19 +217,14 @@ for peer in peers_list:
                 # peer wysłał nam kawałek pliku (block!!!), zapisz go do file managera
                 # poproś o kolejny kawałek
                 file.append(message.block)
-                # block begin i block end w piece są 0 - 262144 i zmienia się index o 1 
-                # index 0 : 0 - 262144
-                # index 1 : 0 - 262144
-                # a nie tak jak myśleliśmy czyli
-                # index 0 : 0 - 262144
-                # index 1 : 262144 - 524287
+                # Sprawdź czy poprawnie pobrałeś piece, sprawdzając hash
                 
-                if len(blocks2download) == 0:
-                    logging.debug(f"result: {sha1(b''.join(file)).digest()}")
-                    logging.debug(f'expect: {torrent_info.get_pieces_SHA1_list()[1]}')
-                    assert sha1(b''.join(file)).digest() == torrent_info.get_pieces_SHA1_list()[1]
-                    logging.debug(f'Piece sie zgadza')
-                    exit(0)
+                # if len(blocks2download) == 0:
+                #     logging.debug(f"result: {sha1(b''.join(file)).digest()}")
+                #     logging.debug(f'expect: {torrent_info.get_pieces_SHA1_list()[1]}')
+                #     assert sha1(b''.join(file)).digest() == torrent_info.get_pieces_SHA1_list()[1]
+                #     logging.debug(f'Piece sie zgadza')
+                #     exit(0)
 
                 block = blocks2download.pop(0)
                 file_manager.request_piece(s, index=block.piece_index, begin=block.begin, length=2**14)
